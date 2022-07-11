@@ -461,15 +461,15 @@ data_counts_day<- data_counts_pre%>%
 
 ##COYOTE
 #filter to 1 species
-data2 <- data_counts_wee%>% mutate(n=ifelse(n>0,1,n)) #turn abundance into presence/absence
-
+data_counts_week_presence_absence <- data_counts_week%>% mutate(n=ifelse(n>0,1,n)) #turn abundance into presence/absence
+data2<-data_counts_week_presence_absence 
 d1 <- data2%>%
   dplyr::filter(common_name == "coyote")
 
 #turn single column data into detection matrix
 d2<- d1%>%
   mutate(n= as.numeric(n))%>%
-  group_split(week)%>% 
+  group_split(work_week)%>% 
   join_all(by="site_name", type="left")
 d3<- as.data.frame(d2)
 names(d3)<- make.names(names(d3), unique=TRUE)
