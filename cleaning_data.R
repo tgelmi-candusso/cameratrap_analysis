@@ -450,11 +450,11 @@ View(data_counts_pre)
 data_counts_week<- data_counts_pre%>%
   # get the table with the number of records per site, species, and week
   dplyr::count(site_name, work_week1,common_name,  .drop=FALSE) %>%
-  separate(work_week1, c("work_week", "month"))
+  separate(work_week1, c("work_week", "week_of_year"))
 data_counts_day<- data_counts_pre%>%
   # get the table with the number of records per site, species, and week
   dplyr::count(site_name, work_day1,common_name,  .drop=FALSE) %>%
-  separate(work_day1, c("work_day", "month"))
+  separate(work_day1, c("work_day", "day_of_year"))
 
 View(data_counts)
 
