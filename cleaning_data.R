@@ -60,7 +60,8 @@ factor(v.0$site_name) ##CPC5, TUW40, TUW41 have pictures beyond deployment perio
 data <- data %>% 
   dplyr::filter(site_name != "TUW40")%>%
   dplyr::filter(site_name != "TUW41")%>%
-  dplyr::filter(site_name != "CPC5")  
+  dplyr::filter(site_name != "CPC5") %>%
+  dplyr::filter(site_name != "TUW20") 
 
 ##correct TUW42
 d42 <- data %>% filter(site_name == "TUW42") %>%
@@ -72,6 +73,7 @@ d42_fix <- d42 %>%
 d42_2020_fix <- rbind(d42_fix, d42_no2020)
 d_no42 <- data %>% filter(site_name != "TUW42")
 data <- rbind(d_no42, d42_2020_fix) #the hole of data stil existing in TUW42 is not due to not deployment nor malfunctioning, rather recovered photos for which I recovered only those with animals
+
 ##transects
 Sca <- c("TUW16",
          "TUW17",
@@ -128,260 +130,254 @@ Don <- c("TUW13",
          "TUW38b")
 CPC <- c("CPC1","CPC2", "CPC3", "CPC4", "CPC5", "CPC6")
 
-###visually check for periods when camera was not functioning#####
-dpS <- data %>% filter(site_name == Sca)%>% ### I replotted this one after fixing TUW42
-  filter(site_name != "TUW20")%>%
-  ggplot(aes(x = as.POSIXct(DateTime))) + 
-  geom_histogram(bins=120) + 
-  facet_wrap(~site_name, scales="free_y")
-ggsave(dpS, "Humber_images.png")
+# ###visually check for periods when camera was not functioning#####
+# dpS <- data %>% filter(site_name == Sca)%>% ### I replotted this one after fixing TUW42
+#   filter(site_name != "TUW20")%>%
+#   ggplot(aes(x = as.POSIXct(DateTime))) + 
+#   geom_histogram(bins=120) + 
+#   facet_wrap(~site_name, scales="free_y")
+# ggsave(dpS, "Humber_images.png")
+# 
+# dpH <- data %>% filter(site_name == Hum)%>%
+#   ggplot(aes(x = as.POSIXct(DateTime))) + 
+#   geom_histogram(bins=120) + 
+#   facet_wrap(~site_name, scales="free_y")+
+#   scale_x_datetime(date_labels = "%Y", date_minor_breaks = "1 month", name = "time scale")
+# ggsave(dpH, "Humber_images.png")
+# 
+# dpD <- data %>% filter(site_name == Don)%>%
+#   ggplot(aes(x = as.POSIXct(DateTime))) + 
+#   geom_histogram(bins=120) + 
+#   facet_wrap(~site_name, scales="free_y")+
+#   scale_x_datetime(date_labels = "%Y", date_minor_breaks = "1 month", name = "time scale")
+# ggsave(dpD, "Don_images.png")
+#
+# dpC <- data %>% filter(site_name == CPC)%>%
+#   ggplot(aes(x = as.POSIXct(DateTime))) + 
+#   geom_histogram(bins=120) + 
+#   facet_wrap(~site_name, scales="free_y")+
+#   scale_x_datetime(date_labels = "%Y", date_minor_breaks = "1 month", name = "time scale")
+# ggsave(dpC, "CPCimages.png")
 
-dpH <- data %>% filter(site_name == Hum)%>%
-  ggplot(aes(x = as.POSIXct(DateTime))) + 
-  geom_histogram(bins=120) + 
-  facet_wrap(~site_name, scales="free_y")+
-  scale_x_datetime(date_labels = "%Y", date_minor_breaks = "1 month", name = "time scale")
-ggsave(dpH, "Humber_images.png")
+###check specific cameras and correct#####
 
-dpD <- data %>% filter(site_name == Don)%>%
-  ggplot(aes(x = as.POSIXct(DateTime))) + 
-  geom_histogram(bins=120) + 
-  facet_wrap(~site_name, scales="free_y")+
-  scale_x_datetime(date_labels = "%Y", date_minor_breaks = "1 month", name = "time scale")
-ggsave(dpD, "Don_images.png")
-
-dpC <- data %>% filter(site_name == CPC)%>%
-  ggplot(aes(x = as.POSIXct(DateTime))) + 
-  geom_histogram(bins=120) + 
-  facet_wrap(~site_name, scales="free_y")+
-  scale_x_datetime(date_labels = "%Y", date_minor_breaks = "1 month", name = "time scale")
-ggsave(dpC, "CPCimages.png")
-
-###check speific cameras and correct#####
-
-data %>% filter(site_name == "TUW21")%>%
-  filter((month(DateTime)==3:4))%>% ##to zoom into a specific month
-  #filter(DateTime < "2021-01-01") %>% ##to zoom into over a specific date
-  ggplot(aes(x = as.POSIXct(DateTime))) + 
-  geom_histogram(bins=120) + 
-  facet_wrap(~site_name, scales="free_y")
-
-###check table of values
-d <- data %>% filter(site_name == "TUW21") %>%
-  filter((month(DateTime)==3:4))%>%
-  #filter(DateTime < "2021-01-01") %>%
-  dplyr::arrange(DateTime)
-View(d)
+# data %>% filter(site_name == "TUW20")%>%
+#   #filter((month(DateTime)==3:4))%>% ##to zoom into a specific month
+#   #filter(DateTime < "2021-01-01") %>% ##to zoom into over a specific date
+#   ggplot(aes(x = as.POSIXct(DateTime))) + 
+#   geom_histogram(bins=120) + 
+#   facet_wrap(~site_name, scales="free_y")
+# 
+# ###check table of values
+# d <- data %>% filter(site_name == "TUW36b") %>%
+#   #filter((month(DateTime)==3:4))%>%
+#   #filter(DateTime < "2021-01-01") %>%
+#   dplyr::arrange(DateTime)
+# View(d)
 ###add periods of malfunctioning to a dataframe
 
 #### add periods of malfunctioning to a dataframe ####
-
-site_name<-"TUW2"
-malf1_start<-"2020-10-02 10:28:46"
-malf1_end<-"2020-10-26 13:09:11"
-
-TUW2 <- as.data.frame(cbind(site_name, malf1_start, malf1_end))
-
-site_name<-"TUW7"
-malf1_start<-"2020-12-09 15:05:16"
-malf1_end<-"2020-12-16 09:08:33"
-malf2_start<-"2020-12-29 09:41:13"
-malf2_end<-"2021-01-15 11:48:53"
-
-TUW7 <- as.data.frame(cbind(site_name, malf1_start, malf1_end, malf2_start, malf2_end))
-
-site_name<-"TUW9"
-malf1_start<-"2020-10-09 12:43:50"
-malf1_end<-"2020-10-14 14:50:04"
-malf2_start<-"2020-12-31 13:26:08"
-malf2_end<-"2021-02-27 16:59:48"
-
-TUW9 <- as.data.frame(cbind(site_name, malf1_start, malf1_end, malf2_start, malf2_end))
-
-site_name<-"TUW10"
-malf1_start<-"2020-12-29 15:46:24"
-malf1_end<-"2021-01-04 13:20:58"
-
-TUW10 <- as.data.frame(cbind(site_name, malf1_start, malf1_end))
-
-site_name<-"TUW11"
-malf1_start<-"2020-11-23 09:38:16"
-malf1_end<-"2020-12-14 08:42:10"
-
-TUW11 <- as.data.frame(cbind(site_name, malf1_start, malf1_end))
-
-site_name<-"TUW19"
-malf1_start<-"2020-11-03 10:41:19"
-malf1_end<-"2020-11-16 14:44:50"
-malf2_start<-"2021-04-18 14:38:24"
-malf2_end<-"2021-05-01 16:00:31"
-
-TUW19 <- as.data.frame(cbind(site_name, malf1_start, malf1_end, malf2_start, malf2_end))
-
-site_name<-"TUW21"
-malf1_start<-"2020-11-03 09:45:24"
-malf1_end<-"2020-11-16 11:18:10"
-malf2_start<-"2021-03-25 13:31:40"
-malf2_end<-"2021-04-01 13:38:21"
-
-TUW21 <- as.data.frame(cbind(site_name, malf1_start, malf1_end, malf2_start, malf2_end))
-
-site_name<-"TUW23"
-malf1_start<-"2021-04-18 15:34:29"
-malf1_end<-"2021-05-01 17:47:00"
-
-TUW23 <- as.data.frame(cbind(site_name, malf1_start, malf1_end))
-
-site_name<-"TUW24"
-malf1_start<-"2021-05-24 10:24:57"
-malf1_end<-"2021-05-29 03:50:54"
-
-TUW24 <- as.data.frame(cbind(site_name, malf1_start, malf1_end))
-
-site_name<-"TUW27"
-malf1_start<-"2020-10-27 10:50:37"
-malf1_end<-"2020-11-07 13:26:36"
-malf2_start<-"2021-01-17 11:39:29"
-malf2_end<-"2021-01-23 09:50:09"
-malf3_start<-"2021-04-08 14:27:24"
-malf3_end<-"2021-05-01 06:25:39"
-
-TUW27 <- as.data.frame(cbind(site_name, malf1_start, malf1_end, malf2_start, malf2_end, malf3_start, malf3_end))
-
-site_name<-"TUW28"
-malf1_start<-"2020-10-09 10:47:01"
-malf1_end<-"2020-10-24 11:37:21"
-malf2_start<-"2021-08-05 15:37:56"
-malf2_end<-"2021-08-28 17:16:56"
-
-TUW28 <- as.data.frame(cbind(site_name, malf1_start, malf1_end, malf2_start, malf2_end))
-
-site_name<-"TUW30"
-malf1_start<-"2020-11-11 14:33:34"
-malf1_end<-"2020-11-17 10:13:29"
-malf2_start<-"2021-02-02 12:21:47"
-malf2_end<-"2021-02-09 20:58:18"
-malf3_start<-"2021-03-08 05:16:06"
-malf3_end<-"2021-04-01 19:01:59"
-malf4_start<-"2021-04-23 20:35:33"
-malf4_end<-"2021-05-04 17:47:57"
-malf5_start<-"2021-06-19 08:52:10"
-malf5_end<-"2021-07-01 17:39:56"
-
-TUW30 <- as.data.frame(cbind(site_name, malf1_start, malf1_end, malf2_start, malf2_end, malf3_start, malf3_end, malf4_start, malf4_end, malf5_start, malf5_end))
-
-site_name<-"TUW31"
-malf1_start<-"2021-05-04 17:23:39"
-malf1_end<-"2021-07-01 17:28:26"
-
-TUW31 <- as.data.frame(cbind(site_name, malf1_start, malf1_end))
-
-site_name<-"TUW33"
-malf1_start<-"2020-10-05 13:59:54"
-malf1_end<-"2020-10-11 13:43:19"
-malf2_start<-"2020-10-14 20:10:54"
-malf2_end<-"2020-10-22 07:21:55"
-
-TUW33 <- as.data.frame(cbind(site_name, malf1_start, malf1_end, malf2_start, malf2_end))
-
-site_name<-"TUW34"
-malf1_start<-"2020-11-22 09:54:53"
-malf1_end<-"2020-11-27 09:52:16"
-malf2_start<-"2020-12-23 22:14:08"
-malf2_end<-"2020-12-28 15:13:49"
-malf3_start<-"2021-02-15 12:37:56"
-malf3_end<-"2021-02-21 12:52:48"
-
-TUW34 <- as.data.frame(cbind(site_name, malf1_start, malf1_end, malf2_start, malf2_end, malf3_start, malf3_end))
-
-site_name<-"TUW35b"
-malf1_start<-"2020-12-05 15:56:19"
-malf1_end<-"2020-12-28 15:36:03"
-
-TUW35b <- as.data.frame(cbind(site_name, malf1_start, malf1_end))
-
-site_name<-"TUW36b"
-malf1_start<-"2021-06-02 08:07:32"
-malf1_end<-"2021-06-08 18:11:39"
-
-TUW36b <- as.data.frame(cbind(site_name, malf1_start, malf1_end))
-
-site_name<-"TUW37b"
-malf1_start<-"2021-01-02 11:46:40"
-malf1_end<-"2021-01-07 14:52:05"
-malf2_start<-"2021-01-17 15:29:06"
-malf2_end<-"2021-01-24 10:57:07"
-
-TUW37b <- as.data.frame(cbind(site_name, malf1_start, malf1_end, malf2_start, malf2_end))
-
-site_name<-"TUW39"
-malf1_start<-"2021-04-05 10:37:29"
-malf1_end<-"2021-05-01 12:08:29"
-
-TUW39 <- as.data.frame(cbind(site_name, malf1_start, malf1_end))
-
-site_name<-"CPC1"
-malf1_start<-"2020-10-28 15:08:40"
-malf1_end<-"2020-11-04 13:23:14"
-
-CPC1 <- as.data.frame(cbind(site_name, malf1_start, malf1_end))
-
-site_name<-"CPC3"
-malf1_start<-"2020-11-01 05:21:05"
-malf1_end<-"2020-11-08 09:49:28"
-malf2_start<-"2020-11-20 00:57:49"
-malf2_end<-"2020-12-28 10:45:44"
-
-CPC3 <- as.data.frame(cbind(site_name, malf1_start, malf1_end, malf2_start, malf2_end))
-
-
-# TUW42 <- will be sorted separately, not doing here
-
-malf <- rbind.fill(TUW2, TUW7, TUW9, TUW10, TUW11, TUW19, TUW21, TUW23, TUW24, TUW27, TUW28,
-                   TUW30, TUW31, TUW33, TUW34, TUW35b, TUW36b, TUW37b, TUW39, CPC1, CPC3)
-#write.csv(malf, "malf.csv")
-
-data <- left_join(data, malf, by="site_name")
-
-
+# 
+# site_name<-"TUW2"
+# malf1_start<-"2020-10-02 10:28:46"
+# malf1_end<-"2020-10-26 13:09:11"
+# 
+# TUW2 <- as.data.frame(cbind(site_name, malf1_start, malf1_end))
+# 
+# site_name<-"TUW7"
+# malf1_start<-"2020-12-09 15:05:16"
+# malf1_end<-"2020-12-16 09:08:33"
+# malf2_start<-"2020-12-29 09:41:13"
+# malf2_end<-"2021-01-15 11:48:53"
+# 
+# TUW7 <- as.data.frame(cbind(site_name, malf1_start, malf1_end, malf2_start, malf2_end))
+# 
+# site_name<-"TUW9"
+# malf1_start<-"2020-10-09 12:43:50"
+# malf1_end<-"2020-10-14 14:50:04"
+# malf2_start<-"2020-12-31 13:26:08"
+# malf2_end<-"2021-02-27 16:59:48"
+# 
+# TUW9 <- as.data.frame(cbind(site_name, malf1_start, malf1_end, malf2_start, malf2_end))
+# 
+# site_name<-"TUW10"
+# malf1_start<-"2020-12-29 15:46:24"
+# malf1_end<-"2021-01-04 13:20:58"
+# 
+# TUW10 <- as.data.frame(cbind(site_name, malf1_start, malf1_end))
+# 
+# site_name<-"TUW11"
+# malf1_start<-"2020-11-23 09:38:16"
+# malf1_end<-"2020-12-14 08:42:10"
+# 
+# TUW11 <- as.data.frame(cbind(site_name, malf1_start, malf1_end))
+# 
+# site_name<-"TUW19"
+# malf1_start<-"2020-11-03 10:41:19"
+# malf1_end<-"2020-11-16 14:44:50"
+# malf2_start<-"2021-04-18 14:38:24"
+# malf2_end<-"2021-05-01 16:00:31"
+# 
+# TUW19 <- as.data.frame(cbind(site_name, malf1_start, malf1_end, malf2_start, malf2_end))
+# 
+# site_name<-"TUW21"
+# malf1_start<-"2020-11-03 09:45:24"
+# malf1_end<-"2020-11-16 11:18:10"
+# malf2_start<-"2021-03-25 13:31:40"
+# malf2_end<-"2021-04-01 13:38:21"
+# 
+# TUW21 <- as.data.frame(cbind(site_name, malf1_start, malf1_end, malf2_start, malf2_end))
+# 
+# site_name<-"TUW23"
+# malf1_start<-"2021-04-18 15:34:29"
+# malf1_end<-"2021-05-01 17:47:00"
+# 
+# TUW23 <- as.data.frame(cbind(site_name, malf1_start, malf1_end))
+# 
+# site_name<-"TUW24"
+# malf1_start<-"2021-05-24 10:24:57"
+# malf1_end<-"2021-05-29 03:50:54"
+# 
+# TUW24 <- as.data.frame(cbind(site_name, malf1_start, malf1_end))
+# 
+# site_name<-"TUW27"
+# malf1_start<-"2020-10-27 10:50:37"
+# malf1_end<-"2020-11-07 13:26:36"
+# malf2_start<-"2021-01-17 11:39:29"
+# malf2_end<-"2021-01-23 09:50:09"
+# malf3_start<-"2021-04-08 14:27:24"
+# malf3_end<-"2021-05-01 06:25:39"
+# 
+# TUW27 <- as.data.frame(cbind(site_name, malf1_start, malf1_end, malf2_start, malf2_end, malf3_start, malf3_end))
+# 
+# site_name<-"TUW28"
+# malf1_start<-"2020-10-09 10:47:01"
+# malf1_end<-"2020-10-24 11:37:21"
+# malf2_start<-"2021-08-05 15:37:56"
+# malf2_end<-"2021-08-28 17:16:56"
+# 
+# TUW28 <- as.data.frame(cbind(site_name, malf1_start, malf1_end, malf2_start, malf2_end))
+# 
+# site_name<-"TUW30"
+# malf1_start<-"2020-11-11 14:33:34"
+# malf1_end<-"2020-11-17 10:13:29"
+# malf2_start<-"2021-02-02 12:21:47"
+# malf2_end<-"2021-02-09 20:58:18"
+# malf3_start<-"2021-03-08 05:16:06"
+# malf3_end<-"2021-04-01 19:01:59"
+# malf4_start<-"2021-04-23 20:35:33"
+# malf4_end<-"2021-05-04 17:47:57"
+# malf5_start<-"2021-06-19 08:52:10"
+# malf5_end<-"2021-07-01 17:39:56"
+# 
+# TUW30 <- as.data.frame(cbind(site_name, malf1_start, malf1_end, malf2_start, malf2_end, malf3_start, malf3_end, malf4_start, malf4_end, malf5_start, malf5_end))
+# 
+# site_name<-"TUW31"
+# malf1_start<-"2021-05-04 17:23:39"
+# malf1_end<-"2021-07-01 17:28:26"
+# 
+# TUW31 <- as.data.frame(cbind(site_name, malf1_start, malf1_end))
+# 
+# site_name<-"TUW33"
+# malf1_start<-"2020-10-05 13:59:54"
+# malf1_end<-"2020-10-11 13:43:19"
+# malf2_start<-"2020-10-14 20:10:54"
+# malf2_end<-"2020-10-22 07:21:55"
+# 
+# TUW33 <- as.data.frame(cbind(site_name, malf1_start, malf1_end, malf2_start, malf2_end))
+# 
+# site_name<-"TUW34"
+# malf1_start<-"2020-11-22 09:54:53"
+# malf1_end<-"2020-11-27 09:52:16"
+# malf2_start<-"2020-12-23 22:14:08"
+# malf2_end<-"2020-12-28 15:13:49"
+# malf3_start<-"2021-02-15 12:37:56"
+# malf3_end<-"2021-02-21 12:52:48"
+# 
+# TUW34 <- as.data.frame(cbind(site_name, malf1_start, malf1_end, malf2_start, malf2_end, malf3_start, malf3_end))
+# 
+# site_name<-"TUW35b"
+# malf1_start<-"2020-12-05 15:56:19"
+# malf1_end<-"2020-12-28 15:36:03"
+# 
+# TUW35b <- as.data.frame(cbind(site_name, malf1_start, malf1_end))
+# 
+# site_name<-"TUW36b"
+# malf1_start<-"2021-06-02 08:07:32"
+# malf1_end<-"2021-06-08 18:11:39"
+# 
+# TUW36b <- as.data.frame(cbind(site_name, malf1_start, malf1_end))
+# 
+# site_name<-"TUW37b"
+# malf1_start<-"2021-01-02 11:46:40"
+# malf1_end<-"2021-01-07 14:52:05"
+# malf2_start<-"2021-01-17 15:29:06"
+# malf2_end<-"2021-01-24 10:57:07"
+# 
+# TUW37b <- as.data.frame(cbind(site_name, malf1_start, malf1_end, malf2_start, malf2_end))
+# 
+# site_name<-"TUW39"
+# malf1_start<-"2021-04-05 10:37:29"
+# malf1_end<-"2021-05-01 12:08:29"
+# 
+# TUW39 <- as.data.frame(cbind(site_name, malf1_start, malf1_end))
+# 
+# site_name<-"CPC1"
+# malf1_start<-"2020-10-28 15:08:40"
+# malf1_end<-"2020-11-04 13:23:14"
+# 
+# CPC1 <- as.data.frame(cbind(site_name, malf1_start, malf1_end))
+# 
+# site_name<-"CPC3"
+# malf1_start<-"2020-11-01 05:21:05"
+# malf1_end<-"2020-11-08 09:49:28"
+# malf2_start<-"2020-11-20 00:57:49"
+# malf2_end<-"2020-12-28 10:45:44"
+# 
+# CPC3 <- as.data.frame(cbind(site_name, malf1_start, malf1_end, malf2_start, malf2_end))
+# 
+# 
+# # TUW42 <- will be sorted separately, not doing here
+# 
+# malf <- rbind.fill(TUW2, TUW7, TUW9, TUW10, TUW11, TUW19, TUW21, TUW23, TUW24, TUW27, TUW28,
+#                    TUW30, TUW31, TUW33, TUW34, TUW35b, TUW36b, TUW37b, TUW39, CPC1, CPC3)
+# #write.csv(malf, "malf.csv")
+# 
+# data <- left_join(data, malf, by="site_name")
+# 
+# 
 #### correct deployment start times for TUW20, 36B & 42 ####
-#TUW20:   2020-09-30 09:35:23
-#TUW36B:  2020-12-28 13:51:11
-#TUW42:   2021-01-10 13:37:34
-
-data <- data %>%
-  mutate(start = ifelse(site_name=="TUW20", "2020-09-30 09:35:23", start)) %>%
-  mutate(start = ifelse(site_name=="TUW36b", "2020-12-28 13:51:11", start)) %>%
-  mutate(start= ifelse(site_name=="TUW42", "2021-01-10 13:37:34", start))
 
 ####
 malf<-read_csv("malf.csv") %>% select(-...1)
 dp_malf<- left_join(dp, malf, by="site_name")
 dp_malf<- dp_malf%>%
   mutate(date_start = as.Date(start))%>%
-  mutate(date_end = as.Date(end))
-View(dp_malf)
+  mutate(date_end = as.Date(end))%>%
+  select(!start)%>%
+  select(!end)
+#View(dp_malf)
 ## then we will use these malf columns and the real start and deployment date columns to set the NAs where we did with weeks but using DateTime > malf1_start and so on
-head
-##Im rethinking this and there should be a better way for this, using camtrapR, that
-data1 <- data%>%
-  dplyr::filter(!(is.na(common_name)))%>%
-  mutate(date = as.Date(DateTime))%>%
-  dplyr::count(site_name, date,common_name,  .drop=FALSE) #key line to change if we want daily occurrence
-  ##double check the deployment start and end, because somehow if they are  minute over or under they are considered as outside, see line
-  ##line 50, if we fix it there then we just use the column if within deployment is 1, then yes and if 0 then NA, instead of the next line
-  
-data2<- left_join(data1, dp_malf, by = "site_name")
 
-data3<-data2%>%
-  mutate(n = ifelse(date>=date_start&date<=date_end,n,NA))
-  ##here we put the malf_start and end dates
-data4<- data3%>%
-  #filter(site_name == Sca) %>%
-  mutate(malf_n=ifelse(date>as.Date(malf1_start)&date<as.Date(malf1_end),1,
-                       (ifelse(date>as.Date(malf2_start)&date<as.Date(malf2_end),1,
-                               (ifelse(date>as.Date(malf3_start)&date<as.Date(malf3_end),1,0))))))
-  ## and so forth if there there are cameras with a malf3 and malf4, columns, it should be ok with the NAs, it should just give n
+##Im rethinking this and there should be a better way for this, using camtrapR, that
+# data1 <- data%>%
+#   dplyr::filter(!(is.na(common_name)))%>%
+#   mutate(date = as.Date(DateTime))%>%
+#   dplyr::count(site_name, date,common_name,  .drop=FALSE) #key line to change if we want daily occurrence
+#   ##double check the deployment start and end, because somehow if they are  minute over or under they are considered as outside, see line
+#   ##line 50, if we fix it there then we just use the column if within deployment is 1, then yes and if 0 then NA, instead of the next line
+#   
+# data2<- left_join(data1, dp_malf, by = "site_name")
+# 
+# data3<-data2%>%
+#   mutate(n = ifelse(date>=date_start&date<=date_end,n,NA))
+#   ##here we put the malf_start and end dates
+# data4<- data3%>%
+#   #filter(site_name == Sca) %>%
+#   mutate(malf_n=ifelse(date>as.Date(malf1_start)&date<as.Date(malf1_end),1,
+#                        (ifelse(date>as.Date(malf2_start)&date<as.Date(malf2_end),1,
+#                                (ifelse(date>as.Date(malf3_start)&date<as.Date(malf3_end),1,0))))))
+#   ## and so forth if there there are cameras with a malf3 and malf4, columns, it should be ok with the NAs, it should just give n
 
 #####trying stuff out####
 View(data4)
@@ -431,9 +427,9 @@ data6
 #### Juan edits 8/7/22 ####
 ## I am editing the code to obtain a table of records for each station, species, and week. 
 # We can change the time unit for the occupancy analysis, but a week is usually appropriate. 
-data1<- left_join(data, malf, by = "site_name")
-View(data)
-data_counts_pre<- data1 %>% 
+data<- left_join(data, dp_malf, by = "site_name")
+#View(data)
+data_counts_pre<- data %>% 
   # remove empty records
   filter(!is.na(common_name)) %>% 
   # change the malfunction dates to dates instead of character
@@ -446,15 +442,15 @@ data_counts_pre<- data1 %>%
            !is.na(malf1_start) & (DateTime<=malf1_start | DateTime>= malf1_end)) %>% 
   # add a column for the time (in weeks) since the deployment of the camera. 
   mutate(work_week = as.integer(ceiling(difftime(DateTime, start, units = 'weeks')))) %>%
-  mutate(work_week1 = paste(work_week, month(DateTime)))%>%
+  mutate(work_week1 = paste(work_week, week(DateTime),sep="_"))%>%
   mutate(work_day = as.integer(ceiling(difftime(DateTime, start, units = 'days')))) %>%
-  mutate(work_day1 = paste(work_week, month(DateTime)))
+  mutate(work_day1 = paste(work_week, yday(DateTime),sep="_"))
 
-
+View(data_counts_pre)
 data_counts<- data_counts_pre%>%
   # get the table with the number of records per site, species, and week
   dplyr::count(site_name, work_week1,common_name,  .drop=FALSE) %>%
-  mutate(season = separate(.,work_week1, c("work_week", "month")))
+  mutate(season = separate(work_week1, c("work_week", "month")))
 
 View(data_counts)
 
