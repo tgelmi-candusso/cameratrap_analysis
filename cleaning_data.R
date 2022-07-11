@@ -451,12 +451,30 @@ data_counts_week<- data_counts_pre%>%
   # get the table with the number of records per site, species, and week
   dplyr::count(site_name, work_week1,common_name,  .drop=FALSE) %>%
   separate(work_week1, c("work_week", "week_of_year"))
+
+##daily counts if we need higher temporal resolution
 data_counts_day<- data_counts_pre%>%
   # get the table with the number of records per site, species, and week
   dplyr::count(site_name, work_day1,common_name,  .drop=FALSE) %>%
   separate(work_day1, c("work_day", "day_of_year"))
 
-View(data_counts)
+
+##COYOTE
+#filter to 1 species
+data2 <- data_counts_wee%>% mutate(n=ifelse(n>0,1,n)) #turn abundance into presence/absence
+
+d1 <- data2%>%
+  dplyr::filter(common_name == "coyote")
+
+#turn single column data into detection matrix
+d2<- d1%>%
+  mutate(n= as.numeric(n))%>%
+  group_split(week)%>% 
+  join_all(by="site_name", type="left")
+d3<- as.data.frame(d2)
+names(d3)<- make.names(names(d3), unique=TRUE)
+d4 <- d3 %>% dplyr::select(n, n.1, n.2, n.3, n.4, n.5, n.6, n.7, n.8, n.9, n.10, n.11, n.12, n.13, n.14, n.15, n.16, n.17, n.18, n.19, n.20, n.21)
+colnames(d4)<- c("week1", "week2", "week3", "week4", "week5", "week13", "week14", "week15", "week16", "week17", "week18", "week26", "week27", "week28", "week29", "week30", "week31", "week40", "week41", "week42", "week43", "week44")
 
 
 
@@ -483,32 +501,4 @@ b2000 <- read_csv("cov_2000.csv")%>%
 data.2000 <- left_join(data, b2000, by="site_name")
 
 
-###visualizing presence of certain species across the year and across cameras
-species <- c("coyote", "fox", "deer", "rabbit", "raccoon")
-###visually check for periods when camera was not functioning#####
-data %>% filter(site_name == Sca)%>% ### I replotted this one after fixing TUW42
-  filter(site_name != "TUW20")%>%
-  filter(common_name == species) %>%
-  ggplot(aes(x = as.POSIXct(DateTime), color=common_name)) + 
-  geom_histogram(bins=360) + 
-  facet_wrap(~site_name, scales="free_y")
 
-
-########trying out camtrap#####
-remotes::install_github("jniedballa/camtrapR", build_vignettes = TRUE)
-
-#install.packages("camtrapR")
-installed.packages()
-data(as.data.frame(data))
-data$DateTime
-dateFormat <- "ymd" # requires lubridate package
-# alternatively, use "%d/%m/%Y" (from base R)
-camop_problem <- cameraOperation(CTtable = data,
-                                 stationCol = "site_name",
-                                 setupCol = "start",
-                                 retrievalCol = "end",
-                                 writecsv = FALSE,
-                                 hasProblems = TRUE,
-                                 dateFormat = "ymd"
-)
-View(data)
