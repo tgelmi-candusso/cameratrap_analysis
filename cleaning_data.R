@@ -442,40 +442,44 @@ data_counts_pre<- data %>%
            !is.na(malf1_start) & (DateTime<=malf1_start | DateTime>= malf1_end)) %>% 
   # add a column for the time (in weeks) since the deployment of the camera. 
   mutate(work_week = as.integer(ceiling(difftime(DateTime, start, units = 'weeks')))) %>%
-  mutate(work_week1 = paste(work_week, week(DateTime),sep="_"))%>%
+  mutate(year_week = week(DateTime))%>%
   mutate(work_day = as.integer(ceiling(difftime(DateTime, start, units = 'days')))) %>%
-  mutate(work_day1 = paste(work_week, yday(DateTime),sep="_"))
+  mutate(year_day = yday(DateTime))
 
-View(data_counts_pre)
+View(data_counts_week)
+factor(data_counts_week$site_name)
 data_counts_week<- data_counts_pre%>%
+  mutate(year_week = factor(year_week, breaks=seq(1,53, 1)))%>%
+  #mutate(site_name = factor(data_counts_week$site_name))
   # get the table with the number of records per site, species, and week
-  dplyr::count(site_name, work_week1,common_name,  .drop=FALSE) %>%
-  separate(work_week1, c("work_week", "week_of_year"))
-
+  dplyr::count(site_name, year_week, common_name,  .drop=FALSE) 
+tr<-data_counts_week%>%
+  filter(site_name=="TUW29")
+View(tr)
 ##daily counts if we need higher temporal resolution
-data_counts_day<- data_counts_pre%>%
-  # get the table with the number of records per site, species, and week
-  dplyr::count(site_name, work_day1,common_name,  .drop=FALSE) %>%
-  separate(work_day1, c("work_day", "day_of_year"))
+# data_counts_day<- data_counts_pre%>%
+#   # get the table with the number of records per site, species, and week
+#   dplyr::count(site_name, common_name, work_day1, .drop=FALSE) %>%
+#   separate(work_day1, c("work_day", "day_of_year"))
 
-
+View(data2)
 ##COYOTE
 #filter to 1 species
 data_counts_week_presence_absence <- data_counts_week%>% mutate(n=ifelse(n>0,1,n)) #turn abundance into presence/absence
 data2<-data_counts_week_presence_absence 
 d1 <- data2%>%
-  dplyr::filter(common_name == "coyote")
-
+  dplyr::filter(common_name == "bird")
+factor(data2$site_name)
 #turn single column data into detection matrix
 d2<- d1%>%
   mutate(n= as.numeric(n))%>%
-  group_split(work_week)%>% 
+  group_split(year_week)%>% 
   join_all(by="site_name", type="left")
 d3<- as.data.frame(d2)
 names(d3)<- make.names(names(d3), unique=TRUE)
 d4 <- d3 %>% dplyr::select(n, n.1, n.2, n.3, n.4, n.5, n.6, n.7, n.8, n.9, n.10, n.11, n.12, n.13, n.14, n.15, n.16, n.17, n.18, n.19, n.20, n.21)
 colnames(d4)<- c("week1", "week2", "week3", "week4", "week5", "week13", "week14", "week15", "week16", "week17", "week18", "week26", "week27", "week28", "week29", "week30", "week31", "week40", "week41", "week42", "week43", "week44")
-
+View(d3)
 
 
 
