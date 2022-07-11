@@ -436,10 +436,13 @@ data_counts_pre<- data %>%
   mutate(malf1_start = ymd_hms(malf1_start),
          malf1_end = ymd_hms(malf1_end),
          malf2_start = ymd_hms(malf2_start),
-         malf2_end = ymd_hms(malf2_end)) %>% 
+         malf2_end = ymd_hms(malf2_end),
+         start = ymd_hms(start),
+         end = ymd_hms(end)) %>% 
+  #filter dates outside of deployment limits %>%
+  filter(DateTime>=start | DateTime<= end) %>% 
   # filter to only the dates that are outside of the malfunctioning periods
-  filter(is.na(malf1_start) | 
-           !is.na(malf1_start) & (DateTime<=malf1_start | DateTime>= malf1_end)) %>% 
+  filter(is.na(malf1_start) | !is.na(malf1_start) & (DateTime<=malf1_start | DateTime>= malf1_end)) %>%
   # add a column for the time (in weeks) since the deployment of the camera. 
   mutate(work_week = as.integer(ceiling(difftime(DateTime, start, units = 'weeks')))) %>%
   mutate(year_week = week(DateTime))%>%
@@ -447,15 +450,19 @@ data_counts_pre<- data %>%
   mutate(year_day = yday(DateTime))
 
 View(data_counts_week)
-factor(data_counts_week$site_name)
+factor(data_counts_pre$year_week)
 data_counts_week<- data_counts_pre%>%
-  mutate(year_week = factor(year_week, breaks=seq(1,53, 1)))%>%
-  #mutate(site_name = factor(data_counts_week$site_name))
+  # mutate(year_week = factor(year_week))%>%
+  # mutate(site_name = factor(site_name)) %>%
+  # mutate(common_name = factor(common_name)) %>%
   # get the table with the number of records per site, species, and week
   dplyr::count(site_name, year_week, common_name,  .drop=FALSE) 
+##checking out whether undeployed weeks appear, they dont
 tr<-data_counts_week%>%
-  filter(site_name=="TUW29")
+  filter(site_name == "TUW36b") %>%
+  filter(common_name== "deer")
 View(tr)
+
 ##daily counts if we need higher temporal resolution
 # data_counts_day<- data_counts_pre%>%
 #   # get the table with the number of records per site, species, and week
