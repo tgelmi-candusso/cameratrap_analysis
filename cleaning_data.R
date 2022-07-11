@@ -13,8 +13,12 @@ library(ggplot2)
 getwd()
 setwd("C:/Users/tizge/Documents/UWIN projects/prey-predator")
 
-###load raw timelapse export csv ####
 data<-read_csv("TimelapseDatabase_FULL_04072022 (1).csv")%>%
+  filter(DeleteFlag == FALSE)%>%
+  filter(revised==TRUE)
+#write.csv(data, "TimelapseDatabase_FULL_04072022_nodeletes_onlyrevised.csv")##not getting smaller
+###load raw timelapse export csv ####
+data<-data%>%
   dplyr::rename(site_name_original = RelativePath, common_name=Species)%>%
   mutate(DateTime = as.POSIXct(DateTime, tz = "America/New_York")) %>%
   mutate(DateTime = force_tz(DateTime, "America/New_York", roll = FALSE))%>%
