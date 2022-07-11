@@ -462,6 +462,7 @@ tr<-data_counts_week%>%
   filter(site_name == "TUW36b") %>%
   filter(common_name== "deer")
 View(tr)
+write.csv(data_counts_week, "data_counts_week.csv")
 
 ##daily counts if we need higher temporal resolution
 # data_counts_day<- data_counts_pre%>%
