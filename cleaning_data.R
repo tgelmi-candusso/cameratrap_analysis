@@ -48,15 +48,15 @@ dp<- read_csv("deployment_period.csv")%>%
   mutate(site_name = gsub("TUW0", "TUW", site_name))
 data<- left_join(data, dp, by="site_name")
 
-#####checking depoloyment period is correct####
+#####checking depoloyment period is correct (for record)####
 ####
-v <- data %>% 
-  mutate(within_deployment_period = ifelse(as.Date(DateTime)>=as.Date(start)&as.Date(DateTime)<=as.Date(end),1,0))%>%
-  select(site_name, common_name, DateTime, start, end, within_deployment_period)
-v.0 <- v%>% filter(within_deployment_period==0)
-factor(v.0$site_name) ##CPC5, TUW40, TUW41 have pictures beyond deployment period (must be the checkup, there were subfolders for these sites)
+# v <- data %>% 
+#   mutate(within_deployment_period = ifelse(as.Date(DateTime)>=as.Date(start)&as.Date(DateTime)<=as.Date(end),1,0))%>%
+#   select(site_name, common_name, DateTime, start, end, within_deployment_period)
+# v.0 <- v%>% filter(within_deployment_period==0)
+# factor(v.0$site_name) ##CPC5, TUW40, TUW41 have pictures beyond deployment period (must be the checkup, there were subfolders for these sites)
 
-##filter cameras that have inconsistent data
+##filter cameras that have inconsistent data ####
 data <- data %>% 
   dplyr::filter(site_name != "TUW40")%>%
   dplyr::filter(site_name != "TUW41")%>%
