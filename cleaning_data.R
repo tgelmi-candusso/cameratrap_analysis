@@ -524,6 +524,8 @@ names(d3)<- make.names(names(d3), unique=TRUE)
 d4 <- d3%>% select(-starts_with('y'), - starts_with('c'))
 
 coyote<-d4
+detection_matrix <- list()
+
 ###trying to do loop in progress
 for (sp in unique(d$common_name)){
   d1<- d %>% dplyr::filter(common_name == sp)
@@ -534,10 +536,24 @@ for (sp in unique(d$common_name)){
   d3<- as.data.frame(d2)
   names(d3)<- make.names(names(d3), unique=TRUE)
   d4 <- d3%>% select(-starts_with('y'), - starts_with('c'))
-  assign(paste0("test", sp), sp) <- d4
-  write.csv(d4, "ad.csv")
+  detection_matrix[[sp]] <- d4
 }
 
+
+saveRDS(detection_matrix, "detection_matrix_all.rds")
+
+###################START HERE IF WANTING TO USE DIRECTLY THE DETECTION MATRIX #############
+###read directly the detection matrix RDS to avoid every step of this script up to here###
+detection_matrix <- readRDS("detection_matrix_all.rds")
+
+##now to call for the detection matrix of a specific animal you can call it this way
+detection_matrix$deer
+detection_matrix$coyote
+
+###save species specific detection matrix into an object:
+coyote<-detection_matrix$coyote
+
+#### COVARIATES ########
 
 ##GENERATE COVARIATE dataframes for the model , make sure to readapt the site_names AND add human/dog presence####
 urlfile500="https://raw.githubusercontent.com/tgelmi-candusso/cameratrap_analysis/main/cov_500.csv"
@@ -545,7 +561,9 @@ urlfile1000="https://raw.githubusercontent.com/tgelmi-candusso/cameratrap_analys
 urlfile2000="https://raw.githubusercontent.com/tgelmi-candusso/cameratrap_analysis/main/cov_2000.csv"
 urlfilehumans="https://raw.githubusercontent.com/tgelmi-candusso/cameratrap_analysis/main/human_dog_df.csv"
 
-human_dog_df <- read.csv(urlfilehumans) %>% select(-1)
+human_dog_df <- read.csv(urlfilehumans) %>% 
+  select(-1) %>% 
+  select(site_name, total_freq_humans ,total_freq_dogs )
 
 b500 <- read.csv(urlfile500)%>% select(-1)%>%
   mutate(site_name = gsub("_", "", site_name))%>%
