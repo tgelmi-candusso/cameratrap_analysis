@@ -504,9 +504,15 @@ d%>% dplyr::filter(common_name == "dog")
 
 
 # GENERATE DETETION MATRICES FOR OCCU MODELS turn single column data into detection matrix#####
-#1. filter ANIMAL SPECIES of interest #####EFFICIENCY IMPROVEMENT NOTE: instead of doing this we could split by species and 
-####################################then use apply to change all the tables into columns
-d1 <- d %>%   dplyr::filter(common_name == "coyote")
+
+###read "data_counts_week.csv" to avoid all previous code using:
+### use the github version for the latest update
+
+d <- read.csv("https://raw.githubusercontent.com/tgelmi-candusso/cameratrap_analysis/main/data_counts_week.csv")
+
+#1. filter ANIMAL SPECIES of interest ### E.G detection matrix for coyotes
+
+d1 <- d %>% dplyr::filter(common_name == "coyote")
 
 #2. split column into weely tables and rejoin by site_name
 d2<- d1%>%
@@ -516,23 +522,44 @@ d2<- d1%>%
 d3<- as.data.frame(d2)
 names(d3)<- make.names(names(d3), unique=TRUE)
 d4 <- d3%>% select(-starts_with('y'), - starts_with('c'))
-View(d4)
+
+coyote<-d4
+###trying to do loop in progress
+for (sp in unique(d$common_name)){
+  d1<- d %>% dplyr::filter(common_name == sp)
+  d2<- d1%>%
+    mutate(n= as.numeric(n))%>%
+    group_split(year_week)%>% 
+    join_all(by="site_name", type="left")
+  d3<- as.data.frame(d2)
+  names(d3)<- make.names(names(d3), unique=TRUE)
+  d4 <- d3%>% select(-starts_with('y'), - starts_with('c'))
+  assign(paste0("test", sp), sp) <- d4
+  write.csv(d4, "ad.csv")
+}
 
 
-##GENERATE COVARIATES , make sure to readapt the site_names and add human/dog presence####
-b500 <- read_csv("cov_500.csv")%>%
+##GENERATE COVARIATE dataframes for the model , make sure to readapt the site_names AND add human/dog presence####
+urlfile500="https://raw.githubusercontent.com/tgelmi-candusso/cameratrap_analysis/main/cov_500.csv"
+urlfile1000="https://raw.githubusercontent.com/tgelmi-candusso/cameratrap_analysis/main/cov_1000.csv"
+urlfile2000="https://raw.githubusercontent.com/tgelmi-candusso/cameratrap_analysis/main/cov_2000.csv"
+urlfilehumans="https://raw.githubusercontent.com/tgelmi-candusso/cameratrap_analysis/main/human_dog_df.csv"
+
+human_dog_df <- read.csv(urlfilehumans) %>% select(-1)
+
+b500 <- read.csv(urlfile500)%>% select(-1)%>%
   mutate(site_name = gsub("_", "", site_name))%>%
   mutate(site_name = gsub("TUW0", "TUW", site_name))%>%
   select(-deployment_start, -deployment_end, -status)
 b500 <- left_join(b500, human_dog_df, by="site_name")
 
-b1000 <- read_csv("cov_1000.csv")%>%
+b1000 <- read.csv(urlfile1000)%>% select(-1)%>%
   mutate(site_name = gsub("_", "", site_name))%>%
   mutate(site_name = gsub("TUW0", "TUW", site_name))%>%
   select(-deployment_start, -deployment_end, -status)
 b2000 <- left_join(b1000, human_dog_df, by="site_name")
 
-b2000 <- read_csv("cov_2000.csv")%>%
+b2000 <- read.csv(urlfile2000)%>% select(-1)%>%
   mutate(site_name = gsub("_", "", site_name))%>%
   mutate(site_name = gsub("TUW0", "TUW", site_name))%>%
   select(-deployment_start, -deployment_end, -status)
