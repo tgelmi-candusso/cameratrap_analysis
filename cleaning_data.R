@@ -480,7 +480,6 @@ data2<-data_counts_week_presence_absence %>%
 
 d <- data.frame(site_name = NA_real_, year_week = NA_real_, common_name = NA_real_, n = NA_real_ )
 f <- data.frame(site_name = NA_real_, year_week = NA_real_, common_name = NA_real_, n = NA_real_ )
-
 for (site in unique(data2$site_name)){
   d1 <- data2[which(data2$site_name == site),]
   for (sp in unique(data2$common_name)){
@@ -498,35 +497,28 @@ for (site in unique(data2$site_name)){
       f<-rbind(f, d2)
     }
   }
-  d<-rbind(d,f)
 }
-d<-d %>% filter(!(is.na(site_name)))
+d<-f %>% filter(!(is.na(site_name)))
 
+###check results
+d1 <- d%>%
+  dplyr::filter(common_name == "coyote")%>%
+  dplyr::filter(site_name == "TUW33")
 
 #turn single column data into detection matrix
-#1. filter animal of interest
-d1 <- d%>%
-  dplyr::filter(common_name == "coyote")
+#1. filter ANIMAL SPECIES of interest #####EFFICIENCY IMPROVEMENT NOTE: instead of doing this we could split by species and 
+####################################then use apply to change all the tables into columns
+d1 <- d%>%   dplyr::filter(common_name == "coyote")
+
+#2. split column into weely tables and rejoin by site_name
 d2<- d1%>%
   mutate(n= as.numeric(n))%>%
   group_split(year_week)%>% 
   join_all(by="site_name", type="left")
 d3<- as.data.frame(d2)
 names(d3)<- make.names(names(d3), unique=TRUE)
-d4 <- d3 %>% dplyr::select(n, n.1, n.2, n.3, n.4, n.5, n.6, n.7, n.8, n.9, n.10, n.11, n.12, n.13, n.14, n.15, n.16, n.17, n.18, n.19, n.20, n.21)
-colnames(d4)<- c("week1", "week2", "week3", "week4", "week5", "week13", "week14", "week15", "week16", "week17", "week18", "week26", "week27", "week28", "week29", "week30", "week31", "week40", "week41", "week42", "week43", "week44")
-View(d3)
-
-d2<- d%>%
-  mutate(n= as.numeric(n))%>%
-  group_split(year_week)%>% 
-  join_all(by="site_name", type="left")
-d3<- as.data.frame(d2)
-names(d3)<- make.names(names(d3), unique=TRUE)
-d4 <- d3 %>% dplyr::select(n, n.1, n.2, n.3, n.4, n.5, n.6, n.7, n.8, n.9, n.10, n.11, n.12, n.13, n.14, n.15, n.16, n.17, n.18, n.19, n.20, n.21)
-colnames(d4)<- c("week1", "week2", "week3", "week4", "week5", "week13", "week14", "week15", "week16", "week17", "week18", "week26", "week27", "week28", "week29", "week30", "week31", "week40", "week41", "week42", "week43", "week44")
-View(d3)
-
+d4 <- d3%>% select(-starts_with('y'), - starts_with('c'))
+View(d4)
 
 
 ##add covariates, make sure to readapt the site_names####
@@ -534,19 +526,24 @@ b500 <- read_csv("cov_500.csv")%>%
   mutate(site_name = gsub("_", "", site_name))%>%
   mutate(site_name = gsub("TUW0", "TUW", site_name))%>%
   select(-deployment_start, -deployment_end, -status)
-data.500 <- left_join(data, b500, by="site_name")
+data.500 <- left_join(d4, b500, by="site_name")
 
 b1000 <- read_csv("cov_1000.csv")%>%
   mutate(site_name = gsub("_", "", site_name))%>%
   mutate(site_name = gsub("TUW0", "TUW", site_name))%>%
   select(-deployment_start, -deployment_end, -status)
-data.1000 <- left_join(data, b1000, by="site_name")
+data.1000 <- left_join(d4, b1000, by="site_name")
 
 b2000 <- read_csv("cov_2000.csv")%>%
   mutate(site_name = gsub("_", "", site_name))%>%
   mutate(site_name = gsub("TUW0", "TUW", site_name))%>%
   select(-deployment_start, -deployment_end, -status)
-data.2000 <- left_join(data, b2000, by="site_name")
+data.2000 <- left_join(d4, b2000, by="site_name")
+
+##rename following selected species in line 511
+coyote.500 <- data.500
+coyote.1000 <- data.1000
+coyote.2000 <- data.2000
 
 
 
