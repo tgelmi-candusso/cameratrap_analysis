@@ -391,6 +391,7 @@ data_counts_pre<- data %>%
   mutate(work_day = as.integer(ceiling(difftime(DateTime, start, units = 'days')))) %>%
   mutate(year_day = yday(DateTime))
 
+
 ##count animals per species per week####
 data_counts_week<- data_counts_pre%>%
   # get the table with the number of records per site, species, and week
@@ -508,22 +509,12 @@ d%>% dplyr::filter(common_name == "dog")
 ###read "data_counts_week.csv" to avoid all previous code using:
 ### use the github version for the latest update
 
-d <- read.csv("https://raw.githubusercontent.com/tgelmi-candusso/cameratrap_analysis/main/data_counts_week.csv")
+d <- read.csv("https://raw.githubusercontent.com/tgelmi-candusso/cameratrap_analysis/main/data_counts_week_scarborough.csv") %>% select(-1)
 
-#1. filter ANIMAL SPECIES of interest ### E.G detection matrix for coyotes
+#1. filter transect/sites of interest here (previously made as vectors on line 85)
+d <- d %>% dplyr::filter(site_name %in% Sca)
 
-d1 <- d %>% dplyr::filter(common_name == "coyote")
-
-#2. split column into weely tables and rejoin by site_name
-d2<- d1%>%
-  mutate(n= as.numeric(n))%>%
-  group_split(year_week)%>% 
-  join_all(by="site_name", type="left")
-d3<- as.data.frame(d2)
-names(d3)<- make.names(names(d3), unique=TRUE)
-d4 <- d3%>% select(-starts_with('y'), - starts_with('c'))
-
-coyote<-d4
+##initiate detection matrix list
 detection_matrix <- list()
 
 ###trying to do loop in progress
@@ -540,12 +531,12 @@ for (sp in unique(d$common_name)){
 }
 
 
-saveRDS(detection_matrix, "detection_matrix_all.rds")
+saveRDS(detection_matrix, "detection_matrix_Scarborough.rds")
 
 ###################START HERE IF WANTING TO USE DIRECTLY THE DETECTION MATRIX #############
 ###read directly the detection matrix RDS to avoid every step of this script up to here###
-detection_matrix <- readRDS("detection_matrix_all.rds")
-
+detection_matrix  <- readRDS(gzcon(url("https://github.com/tgelmi-candusso/cameratrap_analysis/raw/main/detection_matrix_Scarborough.rds")))
+                              
 ##now to call for the detection matrix of a specific animal you can call it this way
 detection_matrix$deer
 detection_matrix$coyote
