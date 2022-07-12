@@ -9,7 +9,7 @@ detection_matrix$coyote
 ###save species specific detection matrix into an object:
 coyote<-detection_matrix$coyote
 
-#### COVARIATES ########
+#### COVARIATES ########  
 
 ##GENERATE COVARIATE dataframes for the model , make sure to readapt the site_names AND add human/dog presence####
 urlfile500="https://raw.githubusercontent.com/tgelmi-candusso/cameratrap_analysis/main/cov_500.csv"
