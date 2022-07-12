@@ -385,24 +385,30 @@ data_counts_pre<- data %>%
   mutate(work_day = as.integer(ceiling(difftime(DateTime, start, units = 'days')))) %>%
   mutate(year_day = yday(DateTime))
 
+##count animals per species per week####
 data_counts_week<- data_counts_pre%>%
   # get the table with the number of records per site, species, and week
   dplyr::count(site_name, year_week, common_name,  .drop=FALSE) 
 
-##daily counts if we ever need higher temporal resolution
+##daily counts if we ever need higher temporal resolution (for future use)####
 # data_counts_day<- data_counts_pre%>%
 #   dplyr::count(site_name, common_name, work_day1, .drop=FALSE) %>%
 
-#turn abundance into presence/absence
+
+##turn counts of abundance into presence/absence####
 data_counts_week_presence_absence <- data_counts_week%>% mutate(n=ifelse(n>0,1,n)) #turn abundance into presence/absence
 
+
+
+#fill NAs for periods where camera was not deployed####
 ### define object data2, with whatever count you use, either abundance or by week or by day 
 data2<-data_counts_week_presence_absence %>%
   mutate(site_name = factor(site_name))
-
-#fill NAs for periods where camera was not deployed
+##create dataframes to fill with the for loop
 d <- data.frame(site_name = NA_real_, year_week = NA_real_, common_name = NA_real_, n = NA_real_ )
 f <- data.frame(site_name = NA_real_, year_week = NA_real_, common_name = NA_real_, n = NA_real_ )
+
+##for loop to add missing weeks as NAs
 for (site in unique(data2$site_name)){
   d1 <- data2[which(data2$site_name == site),]
   for (sp in unique(data2$common_name)){
@@ -422,14 +428,76 @@ for (site in unique(data2$site_name)){
   }
 }
 d<-f %>% filter(!(is.na(site_name)))
+
+###write dataframe of counts per species, per week, per site (with undeployed/unrevised weeks as NAs) as csv
 write.csv(d, "data_counts_week.csv")
 
-###check results
-d1 <- d%>%
+###check results of for loop
+d%>%
   dplyr::filter(common_name == "coyote")%>%
   dplyr::filter(site_name == "TUW33")
 
-#turn single column data into detection matrix
+#####create human presence, dogs presence dataframe as covariates ####
+
+###estimate total weeks "deployed" in this case with revised data because we filtered by revised ####
+total_weeks_deployed <- aggregate(data = data_counts_pre,                # Applying aggregate
+                          year_week ~ site_name,
+                          function(year_week) length(unique(year_week)))
+total_weeks_deployed <- total_weeks_deployed %>% dplyr::rename("total_weeks_deployed" = year_week)
+
+##estimate total number of humans per site####
+data_humans_total<- data_counts_pre%>%
+  filter(humans == TRUE) %>%
+  # get the table with the number of records per site, species, and week
+  dplyr::count(site_name, humans, .drop=FALSE)%>%
+  dplyr::select(!humans)%>%
+  dplyr::rename(total_humans = "n")
+##create dataframe with information
+d5 <- left_join(total_weeks_deployed, data_humans_total, by="site_name") 
+##divide by total number of days deployed
+d5 <- d5 %>% mutate(total_freq_humans = total_humans/total_weeks_deployed)
+
+##estimate total humans per week per site ## in case we need weekly presence of humans for the detection ####
+data_humans_weekly <- data_counts_pre%>%
+  filter(humans == TRUE) %>%
+  # get the table with the number of records per site, species, and week
+  dplyr::count(site_name, year_week, humans, .drop=FALSE) 
+
+
+#count dogs
+data_dogs_total <- data_counts_pre %>% mutate(dogs = ifelse(common_name=="dog", TRUE, FALSE)) %>%
+  filter(dogs==TRUE) %>%
+  # get the table with the number of records per site, species, and week
+  dplyr::count(site_name, dogs, .drop=FALSE) %>%
+  dplyr::select(!dogs)%>%
+  dplyr::rename(total_dogs = "n")
+##add dogs to d5 dataframe
+d5 <- left_join(d5, data_dogs_total, by="site_name") 
+##divide by total number of days deployed
+d5 <- d5 %>% mutate(total_freq_dogs = total_dogs/total_weeks_deployed)
+
+###free ranging dogs
+data_dogs_free_total <- data_counts_pre %>% mutate(dogs = ifelse(common_name=="dog", TRUE, FALSE))%>% 
+  mutate(free_dogs = ifelse(dogs==TRUE & humans==FALSE, TRUE, FALSE)) %>%
+  filter(free_dogs==TRUE) %>%
+  dplyr::count(site_name, free_dogs, .drop=FALSE) %>%
+  dplyr::select(!free_dogs)%>%
+  dplyr::rename(total_dogs_free = "n")
+d5 <- left_join(d5, data_dogs_free_total, by="site_name")
+d5 <- d5 %>% mutate(total_dogs_free = ifelse(is.na(total_dogs_free), 0, total_dogs_free)) %>% 
+  mutate(total_freq_dogs_free = total_dogs_free/total_weeks_deployed) %>%
+  mutate(total_prop_dogs_free = total_dogs_free/total_dogs)
+
+
+human_dog_df <- d5
+View(human_dog_df)
+write.csv(human_dog_df, "human_dog_df.csv")
+
+###number of dogs per wee
+d%>% dplyr::filter(common_name == "dog")
+
+
+# GENERATE DETETION MATRICES FOR OCCU MODELS turn single column data into detection matrix#####
 #1. filter ANIMAL SPECIES of interest #####EFFICIENCY IMPROVEMENT NOTE: instead of doing this we could split by species and 
 ####################################then use apply to change all the tables into columns
 d1 <- d %>%   dplyr::filter(common_name == "coyote")
@@ -445,29 +513,24 @@ d4 <- d3%>% select(-starts_with('y'), - starts_with('c'))
 View(d4)
 
 
-##add covariates, make sure to readapt the site_names####
+##GENERATE COVARIATES , make sure to readapt the site_names and add human/dog presence####
 b500 <- read_csv("cov_500.csv")%>%
   mutate(site_name = gsub("_", "", site_name))%>%
   mutate(site_name = gsub("TUW0", "TUW", site_name))%>%
   select(-deployment_start, -deployment_end, -status)
-data.500 <- left_join(d4, b500, by="site_name")
+b500 <- left_join(b500, human_dog_df, by="site_name")
 
 b1000 <- read_csv("cov_1000.csv")%>%
   mutate(site_name = gsub("_", "", site_name))%>%
   mutate(site_name = gsub("TUW0", "TUW", site_name))%>%
   select(-deployment_start, -deployment_end, -status)
-data.1000 <- left_join(d4, b1000, by="site_name")
+b2000 <- left_join(b1000, human_dog_df, by="site_name")
 
 b2000 <- read_csv("cov_2000.csv")%>%
   mutate(site_name = gsub("_", "", site_name))%>%
   mutate(site_name = gsub("TUW0", "TUW", site_name))%>%
   select(-deployment_start, -deployment_end, -status)
-data.2000 <- left_join(d4, b2000, by="site_name")
-
-##rename following selected species in line 511
-coyote.500 <- data.500
-coyote.1000 <- data.1000
-coyote.2000 <- data.2000
+b2000 <- left_join(b2000, human_dog_df, by="site_name")
 
 
-
+####
