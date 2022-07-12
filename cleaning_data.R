@@ -449,14 +449,14 @@ data_counts_pre<- data %>%
   mutate(work_day = as.integer(ceiling(difftime(DateTime, start, units = 'days')))) %>%
   mutate(year_day = yday(DateTime))
 
-View(data_counts_week)
-factor(data_counts_pre$year_week)
 data_counts_week<- data_counts_pre%>%
   # mutate(year_week = factor(year_week))%>%
   # mutate(site_name = factor(site_name)) %>%
   # mutate(common_name = factor(common_name)) %>%
   # get the table with the number of records per site, species, and week
   dplyr::count(site_name, year_week, common_name,  .drop=FALSE) 
+#View(data_counts_week)
+
 ##checking out whether undeployed weeks appear, they dont
 tr<-data_counts_week%>%
   filter(site_name == "TUW36b") %>%
@@ -464,20 +464,27 @@ tr<-data_counts_week%>%
 View(tr)
 write.csv(data_counts_week, "data_counts_week.csv")
 
-##daily counts if we need higher temporal resolution
+##daily counts if we ever need higher temporal resolution
 # data_counts_day<- data_counts_pre%>%
 #   # get the table with the number of records per site, species, and week
 #   dplyr::count(site_name, common_name, work_day1, .drop=FALSE) %>%
 #   separate(work_day1, c("work_day", "day_of_year"))
 
-View(data2)
-##COYOTE
-#filter to 1 species
+#turn abundance into presence/absence
 data_counts_week_presence_absence <- data_counts_week%>% mutate(n=ifelse(n>0,1,n)) #turn abundance into presence/absence
-data2<-data_counts_week_presence_absence 
+
+#convert one column to multiple columns, one column per time unit
+data2<-data_counts_week_presence_absence %>%
+  mutate(site_name = factor(site_name))
+
+#filter animal of interest
 d1 <- data2%>%
-  dplyr::filter(common_name == "bird")
-factor(data2$site_name)
+  dplyr::filter(common_name == "coyote")%>%
+  dplyr::filter(site_name == "TUW33")
+
+### maybe converting site into factor will give it an expectation of how many it needs to fill up the table
+factor(data2$site_name) ##didnt fix the problem
+
 #turn single column data into detection matrix
 d2<- d1%>%
   mutate(n= as.numeric(n))%>%
@@ -489,6 +496,47 @@ d4 <- d3 %>% dplyr::select(n, n.1, n.2, n.3, n.4, n.5, n.6, n.7, n.8, n.9, n.10,
 colnames(d4)<- c("week1", "week2", "week3", "week4", "week5", "week13", "week14", "week15", "week16", "week17", "week18", "week26", "week27", "week28", "week29", "week30", "week31", "week40", "week41", "week42", "week43", "week44")
 View(d3)
 
+d2<- d1%>%
+  mutate(n= as.numeric(n))%>%
+  group_split(site_name)%>% 
+  join_all(by="site_name", type="left")
+
+#find the missing days:
+d1 <- data2%>%
+  dplyr::filter(common_name == "coyote")%>%
+  dplyr::filter(site_name == "TUW33")
+allweeks <- seq(1, 53, 1)
+absentweeks <- allweeks[!(allweeks %in% d1$year_week)]
+#create mirror dataframe with all missing NAs
+missed <- data.frame(site_name = NA_real_, year_week = absentweeks, common_name = NA_real_, n = NA_real_ )
+#append to the original dataset
+df.filled <- rbind(d1, missed)
+df.filled$common_name <- "coyote"
+df.filled$site_name <- "TUW33"
+
+d <- data.frame(site_name = NA_real_, year_week = NA_real_, common_name = NA_real_, n = NA_real_ )
+d1 <- data.frame(site_name = NA_real_, year_week = NA_real_, common_name = NA_real_, n = NA_real_ )
+
+for (site in unique(data2$site_name)){
+  d1 <- data2[which(data2$site_name == site),]
+  for (sp in unique(data2$common_name)){
+    d2 <- d1[which(d1$common_name == sp),]
+    allweeks <- seq(1, 53, 1)
+    absentweeks_len <- length(allweeks[!(allweeks %in% d2$year_week)])
+    if (absentweeks_len > 0){
+      absentweeks <- allweeks[!(allweeks %in% d2$year_week)]
+      missed <- data.frame(site_name = NA_real_, year_week = absentweeks, common_name = NA_real_, n = NA_real_ )
+      d2.filled <- rbind(d2, missed)
+      d2.filled$common_name <- sp
+      d2.filled$site_name <- site
+      d1<-rbind(d1, d2.filled)
+    } else {
+      d1<-rbind(d1, d2)
+    }
+  }
+  d<-rbind(d,d1)
+}
+d
 
 
 
