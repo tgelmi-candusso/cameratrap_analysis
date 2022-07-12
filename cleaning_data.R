@@ -130,7 +130,7 @@ Don <- c("TUW13",
          "TUW38b")
 CPC <- c("CPC1","CPC2", "CPC3", "CPC4", "CPC5", "CPC6")
 
-# ###visually check for periods when camera was not functioning#####
+# ###determining malfunction dates (for record) visually check for periods when camera was not functioning#####
 # dpS <- data %>% filter(site_name == Sca)%>% ### I replotted this one after fixing TUW42
 #   filter(site_name != "TUW20")%>%
 #   ggplot(aes(x = as.POSIXct(DateTime))) + 
@@ -159,7 +159,7 @@ CPC <- c("CPC1","CPC2", "CPC3", "CPC4", "CPC5", "CPC6")
 #   scale_x_datetime(date_labels = "%Y", date_minor_breaks = "1 month", name = "time scale")
 # ggsave(dpC, "CPCimages.png")
 
-###check specific cameras and correct#####
+###check specific cameras and correct#
 
 # data %>% filter(site_name == "TUW20")%>%
 #   #filter((month(DateTime)==3:4))%>% ##to zoom into a specific month
@@ -176,7 +176,7 @@ CPC <- c("CPC1","CPC2", "CPC3", "CPC4", "CPC5", "CPC6")
 # View(d)
 ###add periods of malfunctioning to a dataframe
 
-#### add periods of malfunctioning to a dataframe ####
+#### add periods of malfunctioning to a dataframe #
 # 
 # site_name<-"TUW2"
 # malf1_start<-"2020-10-02 10:28:46"
@@ -346,9 +346,8 @@ CPC <- c("CPC1","CPC2", "CPC3", "CPC4", "CPC5", "CPC6")
 # data <- left_join(data, malf, by="site_name")
 # 
 # 
-#### correct deployment start times for TUW20, 36B & 42 ####
 
-####
+####reading malfunction dates from csv ####
 malf<-read_csv("malf.csv") %>% select(-...1)
 dp_malf<- left_join(dp, malf, by="site_name")
 dp_malf<- dp_malf%>%
@@ -359,76 +358,13 @@ dp_malf<- dp_malf%>%
 #View(dp_malf)
 ## then we will use these malf columns and the real start and deployment date columns to set the NAs where we did with weeks but using DateTime > malf1_start and so on
 
-##Im rethinking this and there should be a better way for this, using camtrapR, that
-# data1 <- data%>%
-#   dplyr::filter(!(is.na(common_name)))%>%
-#   mutate(date = as.Date(DateTime))%>%
-#   dplyr::count(site_name, date,common_name,  .drop=FALSE) #key line to change if we want daily occurrence
-#   ##double check the deployment start and end, because somehow if they are  minute over or under they are considered as outside, see line
-#   ##line 50, if we fix it there then we just use the column if within deployment is 1, then yes and if 0 then NA, instead of the next line
-#   
-# data2<- left_join(data1, dp_malf, by = "site_name")
-# 
-# data3<-data2%>%
-#   mutate(n = ifelse(date>=date_start&date<=date_end,n,NA))
-#   ##here we put the malf_start and end dates
-# data4<- data3%>%
-#   #filter(site_name == Sca) %>%
-#   mutate(malf_n=ifelse(date>as.Date(malf1_start)&date<as.Date(malf1_end),1,
-#                        (ifelse(date>as.Date(malf2_start)&date<as.Date(malf2_end),1,
-#                                (ifelse(date>as.Date(malf3_start)&date<as.Date(malf3_end),1,0))))))
-#   ## and so forth if there there are cameras with a malf3 and malf4, columns, it should be ok with the NAs, it should just give n
-
-#####trying stuff out####
-View(data4)
-write.csv(data4, "TUW_datacounts.csv")
-data1$common_name
-data4 %>% 
-  #filter(site_name == "TUW19")%>%
-  ggplot(aes(x = as.POSIXct(date))) + 
-  geom_histogram(bins=364) + 
-  facet_wrap(~site_name, scales="free")+
-  scale_x_datetime(date_labels = "%Y", date_minor_breaks = "1 month", name = "time scale")
-##when dataframe is ready we add covarites here is a script with the correct fix for the site_names.
-d<- as.data.frame(seq(as.Date("2020/9/15"), by = "day", length.out = 390))
-colnames(d)<- "date"
-
-f<-left_join(d, data4, by="date")
-View(f)
-sp<- levels(data$common_name)
-sn<- levels(data$site_name)
-for (i in unique(data4$common_name)){
-  for (j in unique(data4$site_name)){
-    g<- data4 %>% 
-      dplyr::filter(common_name == i)%>%
-      dplyr::filter(site_name == j) %>%
-      tidyr:: complete(date = seq.Date(min(date), max(date), by="day"))
-    data5 <- rbind(data5, g)
-  }
-}
-for (i in sp){
-  g<- data4 %>% 
-    dplyr::filter(common_name == i)
-  for (j in sn){
-    g<- data4 %>% 
-      dplyr::filter(site_name == j) %>%
-      tidyr:: complete(date = seq.Date(min(date), max(date), by="day"))
-    data6<- rbind(data5, g)
-  }
-}
-data5 <-data4%>% filter(common_name=="not listed") %>% 
-  filter(site_name == "TUW27")%>%
-complete(date = seq.Date(min(date), max(date), by="day"))
-View(data5)
-data6
 
 
+####counting presence per week #####
 
-#### Juan edits 8/7/22 ####
-## I am editing the code to obtain a table of records for each station, species, and week. 
-# We can change the time unit for the occupancy analysis, but a week is usually appropriate. 
+# add malfunction dates
 data<- left_join(data, dp_malf, by = "site_name")
-#View(data)
+#filter malfunction dates
 data_counts_pre<- data %>% 
   # remove empty records
   filter(!is.na(common_name)) %>% 
@@ -450,34 +386,21 @@ data_counts_pre<- data %>%
   mutate(year_day = yday(DateTime))
 
 data_counts_week<- data_counts_pre%>%
-  # mutate(year_week = factor(year_week))%>%
-  # mutate(site_name = factor(site_name)) %>%
-  # mutate(common_name = factor(common_name)) %>%
   # get the table with the number of records per site, species, and week
   dplyr::count(site_name, year_week, common_name,  .drop=FALSE) 
-#View(data_counts_week)
-
-##checking out whether undeployed weeks appear, they dont
-tr<-data_counts_week%>%
-  filter(site_name == "TUW36b") %>%
-  filter(common_name== "deer")
-View(tr)
-write.csv(data_counts_week, "data_counts_week.csv")
 
 ##daily counts if we ever need higher temporal resolution
 # data_counts_day<- data_counts_pre%>%
-#   # get the table with the number of records per site, species, and week
 #   dplyr::count(site_name, common_name, work_day1, .drop=FALSE) %>%
-#   separate(work_day1, c("work_day", "day_of_year"))
 
 #turn abundance into presence/absence
 data_counts_week_presence_absence <- data_counts_week%>% mutate(n=ifelse(n>0,1,n)) #turn abundance into presence/absence
 
-#fill NAs
+### define object data2, with whatever count you use, either abundance or by week or by day 
 data2<-data_counts_week_presence_absence %>%
   mutate(site_name = factor(site_name))
 
-
+#fill NAs for periods where camera was not deployed
 d <- data.frame(site_name = NA_real_, year_week = NA_real_, common_name = NA_real_, n = NA_real_ )
 f <- data.frame(site_name = NA_real_, year_week = NA_real_, common_name = NA_real_, n = NA_real_ )
 for (site in unique(data2$site_name)){
@@ -499,6 +422,7 @@ for (site in unique(data2$site_name)){
   }
 }
 d<-f %>% filter(!(is.na(site_name)))
+write.csv(d, "data_counts_week.csv")
 
 ###check results
 d1 <- d%>%
@@ -508,7 +432,7 @@ d1 <- d%>%
 #turn single column data into detection matrix
 #1. filter ANIMAL SPECIES of interest #####EFFICIENCY IMPROVEMENT NOTE: instead of doing this we could split by species and 
 ####################################then use apply to change all the tables into columns
-d1 <- d%>%   dplyr::filter(common_name == "coyote")
+d1 <- d %>%   dplyr::filter(common_name == "coyote")
 
 #2. split column into weely tables and rejoin by site_name
 d2<- d1%>%
