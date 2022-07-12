@@ -473,49 +473,13 @@ write.csv(data_counts_week, "data_counts_week.csv")
 #turn abundance into presence/absence
 data_counts_week_presence_absence <- data_counts_week%>% mutate(n=ifelse(n>0,1,n)) #turn abundance into presence/absence
 
-#convert one column to multiple columns, one column per time unit
+#fill NAs
 data2<-data_counts_week_presence_absence %>%
   mutate(site_name = factor(site_name))
 
-#filter animal of interest
-d1 <- data2%>%
-  dplyr::filter(common_name == "coyote")%>%
-  dplyr::filter(site_name == "TUW33")
-
-### maybe converting site into factor will give it an expectation of how many it needs to fill up the table
-factor(data2$site_name) ##didnt fix the problem
-
-#turn single column data into detection matrix
-d2<- d1%>%
-  mutate(n= as.numeric(n))%>%
-  group_split(year_week)%>% 
-  join_all(by="site_name", type="left")
-d3<- as.data.frame(d2)
-names(d3)<- make.names(names(d3), unique=TRUE)
-d4 <- d3 %>% dplyr::select(n, n.1, n.2, n.3, n.4, n.5, n.6, n.7, n.8, n.9, n.10, n.11, n.12, n.13, n.14, n.15, n.16, n.17, n.18, n.19, n.20, n.21)
-colnames(d4)<- c("week1", "week2", "week3", "week4", "week5", "week13", "week14", "week15", "week16", "week17", "week18", "week26", "week27", "week28", "week29", "week30", "week31", "week40", "week41", "week42", "week43", "week44")
-View(d3)
-
-d2<- d1%>%
-  mutate(n= as.numeric(n))%>%
-  group_split(site_name)%>% 
-  join_all(by="site_name", type="left")
-
-#find the missing days:
-d1 <- data2%>%
-  dplyr::filter(common_name == "coyote")%>%
-  dplyr::filter(site_name == "TUW33")
-allweeks <- seq(1, 53, 1)
-absentweeks <- allweeks[!(allweeks %in% d1$year_week)]
-#create mirror dataframe with all missing NAs
-missed <- data.frame(site_name = NA_real_, year_week = absentweeks, common_name = NA_real_, n = NA_real_ )
-#append to the original dataset
-df.filled <- rbind(d1, missed)
-df.filled$common_name <- "coyote"
-df.filled$site_name <- "TUW33"
 
 d <- data.frame(site_name = NA_real_, year_week = NA_real_, common_name = NA_real_, n = NA_real_ )
-d1 <- data.frame(site_name = NA_real_, year_week = NA_real_, common_name = NA_real_, n = NA_real_ )
+f <- data.frame(site_name = NA_real_, year_week = NA_real_, common_name = NA_real_, n = NA_real_ )
 
 for (site in unique(data2$site_name)){
   d1 <- data2[which(data2$site_name == site),]
@@ -529,15 +493,39 @@ for (site in unique(data2$site_name)){
       d2.filled <- rbind(d2, missed)
       d2.filled$common_name <- sp
       d2.filled$site_name <- site
-      d1<-rbind(d1, d2.filled)
+      f<-rbind(f, d2.filled)
     } else {
-      d1<-rbind(d1, d2)
+      f<-rbind(f, d2)
     }
   }
-  d<-rbind(d,d1)
+  d<-rbind(d,f)
 }
-d
+d<-d %>% filter(!(is.na(site_name)))
 
+
+#turn single column data into detection matrix
+#1. filter animal of interest
+d1 <- d%>%
+  dplyr::filter(common_name == "coyote")
+d2<- d1%>%
+  mutate(n= as.numeric(n))%>%
+  group_split(year_week)%>% 
+  join_all(by="site_name", type="left")
+d3<- as.data.frame(d2)
+names(d3)<- make.names(names(d3), unique=TRUE)
+d4 <- d3 %>% dplyr::select(n, n.1, n.2, n.3, n.4, n.5, n.6, n.7, n.8, n.9, n.10, n.11, n.12, n.13, n.14, n.15, n.16, n.17, n.18, n.19, n.20, n.21)
+colnames(d4)<- c("week1", "week2", "week3", "week4", "week5", "week13", "week14", "week15", "week16", "week17", "week18", "week26", "week27", "week28", "week29", "week30", "week31", "week40", "week41", "week42", "week43", "week44")
+View(d3)
+
+d2<- d%>%
+  mutate(n= as.numeric(n))%>%
+  group_split(year_week)%>% 
+  join_all(by="site_name", type="left")
+d3<- as.data.frame(d2)
+names(d3)<- make.names(names(d3), unique=TRUE)
+d4 <- d3 %>% dplyr::select(n, n.1, n.2, n.3, n.4, n.5, n.6, n.7, n.8, n.9, n.10, n.11, n.12, n.13, n.14, n.15, n.16, n.17, n.18, n.19, n.20, n.21)
+colnames(d4)<- c("week1", "week2", "week3", "week4", "week5", "week13", "week14", "week15", "week16", "week17", "week18", "week26", "week27", "week28", "week29", "week30", "week31", "week40", "week41", "week42", "week43", "week44")
+View(d3)
 
 
 
