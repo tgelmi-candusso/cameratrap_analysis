@@ -74,6 +74,14 @@ d42_2020_fix <- rbind(d42_fix, d42_no2020)
 d_no42 <- data %>% filter(site_name != "TUW42")
 data <- rbind(d_no42, d42_2020_fix) #the hole of data stil existing in TUW42 is not due to not deployment nor malfunctioning, rather recovered photos for which I recovered only those with animals
 
+
+##correct TUW31 and TUW32 switcharoo
+data<-data %>% 
+  mutate(site_name = ifelse(site_name_original == "TUW31" & (DateTime>= "2021-07-01 17:28:26" & DateTime<= "2021-08-29 11:23:51"), "TUW32", site_name)) %>%
+  mutate(site_name = ifelse(site_name_original == "TUW31" & (DateTime>= "2021-08-29 13:02:26" & DateTime<= "2021-08-29 13:03:42"), "TUW32", site_name)) %>%
+  mutate(site_name = ifelse(site_name_original == "TUW32" & (DateTime>= "2021-07-01 17:55:22" & DateTime<= "2021-08-29 11:57:01"), "TUW31", site_name))
+
+
 ##transects
 Sca <- c("TUW16",
          "TUW17",
@@ -355,15 +363,13 @@ dp_malf<- dp_malf%>%
   mutate(date_end = as.Date(end))%>%
   select(!start)%>%
   select(!end)
-#View(dp_malf)
-## then we will use these malf columns and the real start and deployment date columns to set the NAs where we did with weeks but using DateTime > malf1_start and so on
 
+# add malfunction dates
+data<- left_join(data, dp_malf, by = "site_name")
 
 
 ####counting presence per week #####
 
-# add malfunction dates
-data<- left_join(data, dp_malf, by = "site_name")
 #filter malfunction dates
 data_counts_pre<- data %>% 
   # remove empty records
