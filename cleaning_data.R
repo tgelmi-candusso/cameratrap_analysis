@@ -560,17 +560,21 @@ human_dog_df <- read.csv(urlfilehumans) %>%
 b500 <- read_csv(urlfile500)%>%
   mutate(site_name = gsub("_", "", site_name))%>%
   mutate(site_name = gsub("TUW0", "TUW", site_name))
-b500 <- left_join(b500, human_dog_df, by="site_name")
+b500 <- left_join(b500, human_dog_df, by="site_name")%>%
+  dplyr::filter(site_name %in% unique(detection_matrix$deer$site_name)) ##filter those for relevant for the analysis
 
 b1000 <- read_csv(urlfile1000)%>%
   mutate(site_name = gsub("_", "", site_name))%>%
   mutate(site_name = gsub("TUW0", "TUW", site_name))
-b2000 <- left_join(b1000, human_dog_df, by="site_name")
+b1000 <- left_join(b1000, human_dog_df, by="site_name")%>%
+  dplyr::filter(site_name %in% unique(detection_matrix$deer$site_name)) ##filter those for relevant for the analysis
+
 
 b2000 <- read_csv(urlfile2000)%>%
   mutate(site_name = gsub("_", "", site_name))%>%
   mutate(site_name = gsub("TUW0", "TUW", site_name))
-b2000 <- left_join(b2000, human_dog_df, by="site_name")
+b2000 <- left_join(b2000, human_dog_df, by="site_name")%>%
+  dplyr::filter(site_name %in% unique(detection_matrix$deer$site_name)) ##filter those for relevant for the analysis
 
 
-####
+
