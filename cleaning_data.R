@@ -11,7 +11,7 @@ library(unmarked)
 library(ggplot2)
 
 getwd()
-setwd("C:/Users/tizge/Documents/UWIN projects/prey-predator")
+setwd("C:/Users/tizge/Documents/GitHub/cameratrap_analysis")
 
 data<-read_csv("TimelapseDatabase_FULL_04072022 (1).csv")%>%
   filter(DeleteFlag == FALSE)%>%
@@ -543,6 +543,7 @@ detection_matrix$coyote
 
 ###save species specific detection matrix into an object:
 coyote<-detection_matrix$coyote
+deer<-detection_matrix$deer
 
 #### COVARIATES ########
 
@@ -556,22 +557,19 @@ human_dog_df <- read.csv(urlfilehumans) %>%
   select(-1) %>% 
   select(site_name, total_freq_humans ,total_freq_dogs )
 
-b500 <- read.csv(urlfile500)%>% select(-1)%>%
+b500 <- read_csv(urlfile500)%>%
   mutate(site_name = gsub("_", "", site_name))%>%
-  mutate(site_name = gsub("TUW0", "TUW", site_name))%>%
-  select(-deployment_start, -deployment_end, -status)
+  mutate(site_name = gsub("TUW0", "TUW", site_name))
 b500 <- left_join(b500, human_dog_df, by="site_name")
 
-b1000 <- read.csv(urlfile1000)%>% select(-1)%>%
+b1000 <- read_csv(urlfile1000)%>%
   mutate(site_name = gsub("_", "", site_name))%>%
-  mutate(site_name = gsub("TUW0", "TUW", site_name))%>%
-  select(-deployment_start, -deployment_end, -status)
+  mutate(site_name = gsub("TUW0", "TUW", site_name))
 b2000 <- left_join(b1000, human_dog_df, by="site_name")
 
-b2000 <- read.csv(urlfile2000)%>% select(-1)%>%
+b2000 <- read_csv(urlfile2000)%>%
   mutate(site_name = gsub("_", "", site_name))%>%
-  mutate(site_name = gsub("TUW0", "TUW", site_name))%>%
-  select(-deployment_start, -deployment_end, -status)
+  mutate(site_name = gsub("TUW0", "TUW", site_name))
 b2000 <- left_join(b2000, human_dog_df, by="site_name")
 
 
