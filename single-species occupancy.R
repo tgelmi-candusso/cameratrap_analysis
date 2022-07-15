@@ -41,8 +41,9 @@ b2000 <- left_join(b2000, human_dog_df, by="site_name")%>%
 
 ##call occupancy covariates
 cov<- b1000 %>% select(-1, -BUFF_DIST, -SHAPE_Length, -ORIG_FID, -SHAPE_Area)
-cov <- as.data.frame(scale(cov))
-
+cov1 <- cov[,1:2]
+cov2 <- as.data.frame(scale(cov[,3:ncol(cov)]))
+cov<- cbind(cov1,cov2)
 ##call detection covariate matrix here if using
 ##det_list <- list(season = det_covs)
 
@@ -58,11 +59,6 @@ mdata <- coyote
 
 fit_null <- occu(formula = ~ 1
                  ~ 1,
-                 data = mdata)
-
-
-fit_null <- occu(formula = ~1
-                      ~1
                  data = mdata)
 
 fit_LFT <- occu(formula = ~1
