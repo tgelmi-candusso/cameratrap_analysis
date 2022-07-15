@@ -13,7 +13,7 @@ library(ggplot2)
 getwd()
 setwd("C:/Users/tizge/Documents/GitHub/cameratrap_analysis")
 
-data<-read_csv("TimelapseDatabase_FULL_04072022 (1).csv")%>%
+data<-read_csv("TimelapseDatabase_FULL_14072022 (1).csv")%>%
   filter(DeleteFlag == FALSE)%>%
   filter(revised==TRUE)
 #write.csv(data, "TimelapseDatabase_FULL_04072022_nodeletes_onlyrevised.csv")##not getting smaller
@@ -137,6 +137,38 @@ Don <- c("TUW13",
          "TUW38",
          "TUW38b")
 CPC <- c("CPC1","CPC2", "CPC3", "CPC4", "CPC5", "CPC6")
+
+rev_sites <- c("TUW17",
+               #"TUW18",
+               "TUW19", 
+               "TUW21", 
+               "TUW23",
+               "TUW24",
+               "TUW25",
+               "TUW26",
+               "TUW27",
+               "TUW28",
+               "TUW29",
+               "TUW29b",
+               "TUW39",
+               "TUW42",
+               "TUW36",
+               "TUW38",
+               "TUW37b",
+               "TUW35a",
+               "TUW37",
+               #"TUW36b",
+               #"TUW33b",
+               #"TUW34",
+               "TUW38b",
+               #"TUW35b",
+               #"TUW32",
+               "TUW31",
+               #"TUW33",
+               "TUW2")
+               #"TUW14",
+               #"TUW1")
+
 
 # ###determining malfunction dates (for record) visually check for periods when camera was not functioning#####
 # dpS <- data %>% filter(site_name == Sca)%>% ### I replotted this one after fixing TUW42
@@ -497,7 +529,7 @@ d5 <- d5 %>% mutate(total_dogs_free = ifelse(is.na(total_dogs_free), 0, total_do
 
 
 human_dog_df <- d5
-View(human_dog_df)
+#View(human_dog_df)
 write.csv(human_dog_df, "human_dog_df.csv")
 
 ###number of dogs per wee
@@ -509,15 +541,16 @@ d%>% dplyr::filter(common_name == "dog")
 ###read "data_counts_week.csv" to avoid all previous code using:
 ### use the github version for the latest update
 
-d <- read.csv("https://raw.githubusercontent.com/tgelmi-candusso/cameratrap_analysis/main/data_counts_week_scarborough.csv") %>% select(-1)
+
+#d <- read.csv("https://raw.githubusercontent.com/tgelmi-candusso/cameratrap_analysis/main/data_counts_week_scarborough.csv") %>% select(-1)
 
 #1. filter transect/sites of interest here (previously made as vectors on line 85)
-d <- d %>% dplyr::filter(site_name %in% Sca)
+d <- d %>% dplyr::filter(site_name %in% rev_sites)
 
 ##initiate detection matrix list
 detection_matrix <- list()
 
-###trying to do loop in progress
+###loop filtering species and create a list of detection matrices per animals 
 for (sp in unique(d$common_name)){
   d1<- d %>% dplyr::filter(common_name == sp)
   d2<- d1%>%
@@ -531,7 +564,7 @@ for (sp in unique(d$common_name)){
 }
 
 
-saveRDS(detection_matrix, "detection_matrix_Scarborough.rds")
+saveRDS(detection_matrix, "detection_matrix_revsites_15072022.rds")
 
 ###################START HERE IF WANTING TO USE DIRECTLY THE DETECTION MATRIX #############
 ###read directly the detection matrix RDS to avoid every step of this script up to here###
