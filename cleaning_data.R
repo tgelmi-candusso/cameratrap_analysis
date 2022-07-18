@@ -13,9 +13,14 @@ library(ggplot2)
 getwd()
 setwd("C:/Users/tizge/Documents/GitHub/cameratrap_analysis")
 
+#quick checkup
+# read_csv("TimelapseDatabase_FULL_14072022 (1).csv") %>%
+#   filter(RelativePath == "TUW36")
+
 data<-read_csv("TimelapseDatabase_FULL_14072022 (1).csv")%>%
-  filter(DeleteFlag == FALSE)%>%
-  filter(revised==TRUE)
+  filter(revised==TRUE) %>%
+  filter(DeleteFlag == FALSE)
+
 #write.csv(data, "TimelapseDatabase_FULL_04072022_nodeletes_onlyrevised.csv")##not getting smaller
 ###load raw timelapse export csv ####
 data<-data%>%
@@ -36,7 +41,6 @@ data<-data%>%
   dplyr::mutate(site_name = factor(site_name))%>% 
   dplyr::mutate(date = factor(date(DateTime)))%>% 
   dplyr::mutate(common_name = factor(common_name))
-
 #View(data)
 
 ##add deployment periods####
@@ -495,7 +499,7 @@ data_humans_total<- data_counts_pre%>%
 d5 <- left_join(total_weeks_deployed, data_humans_total, by="site_name") 
 ##divide by total number of days deployed
 d5 <- d5 %>% mutate(total_freq_humans = total_humans/total_weeks_deployed)
-
+View(data_humans_total)
 ##estimate total humans per week per site ## in case we need weekly presence of humans for the detection ####
 data_humans_weekly <- data_counts_pre%>%
   filter(humans == TRUE) %>%
@@ -568,7 +572,7 @@ saveRDS(detection_matrix, "detection_matrix_revsites_15072022.rds")
 
 ###################START HERE IF WANTING TO USE DIRECTLY THE DETECTION MATRIX #############
 ###read directly the detection matrix RDS to avoid every step of this script up to here###
-detection_matrix  <- readRDS(gzcon(url("https://github.com/tgelmi-candusso/cameratrap_analysis/raw/main/detection_matrix_Scarborough.rds")))
+detection_matrix  <- readRDS(gzcon(url("https://github.com/tgelmi-candusso/cameratrap_analysis/raw/main/detection_matrix_revsites_15072022.rds")))
                               
 ##now to call for the detection matrix of a specific animal you can call it this way
 detection_matrix$deer
@@ -579,7 +583,7 @@ coyote<-detection_matrix$coyote
 deer<-detection_matrix$deer
 
 #### COVARIATES ########
-
+library(readr)
 ##GENERATE COVARIATE dataframes for the model , make sure to readapt the site_names AND add human/dog presence####
 urlfile500="https://raw.githubusercontent.com/tgelmi-candusso/cameratrap_analysis/main/cov_500.csv"
 urlfile1000="https://raw.githubusercontent.com/tgelmi-candusso/cameratrap_analysis/main/cov_1000.csv"
@@ -596,12 +600,11 @@ b500 <- read_csv(urlfile500)%>%
 b500 <- left_join(b500, human_dog_df, by="site_name")%>%
   dplyr::filter(site_name %in% unique(detection_matrix$deer$site_name)) ##filter those for relevant for the analysis
 
-b1000 <- read_csv(urlfile1000)%>%
+b1000 <- read.csv(urlfile1000)%>%
   mutate(site_name = gsub("_", "", site_name))%>%
   mutate(site_name = gsub("TUW0", "TUW", site_name))
 b1000 <- left_join(b1000, human_dog_df, by="site_name")%>%
   dplyr::filter(site_name %in% unique(detection_matrix$deer$site_name)) ##filter those for relevant for the analysis
-
 
 b2000 <- read_csv(urlfile2000)%>%
   mutate(site_name = gsub("_", "", site_name))%>%
