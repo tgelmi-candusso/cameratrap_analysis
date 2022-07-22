@@ -122,41 +122,17 @@ cov<- cbind(cov1,cov2)
 siteCovs_2000 <- cov
 
 
-##call detection covariate matrix here if using
+##call detection covariate matrix here if using ##will need to add a detection variable later, but not for the summer project
 ##det_list <- list(season = det_covs)
 
-# setting up for occupancy for deer 
+# setting up for occupancy for deer  ### CHANGE SPECIES HERE after $ if needed 
 y <- detection_matrix$deer %>% dplyr::filter(site_name %in% rev_sites) %>%
-  dplyr::filter(site_name != "TUW37") %>% 
+  dplyr::filter(site_name != "TUW37") %>%  ##(OPTIONAL) dont remember why TUW37 is omitted
   select(-1) ## select final columns select(2:54), this could also be written select(-1) to avoid the first column with the site names
 
-###I will comment the next chunk because the covriate frames are already data frames so I an simply name the previous relevant chunk as siteCovs_100 ####
-# siteCovs_100 <- as.data.frame(b100)
-# #siteCovs_100 <- siteCovs_100[,1:23] ## the covariate dataframes are ready from above, doing this might cut off final columns, potentially added later I will comment this line of code
-# 
-# siteCovs_500 <- as.data.frame(b500)
-# #siteCovs_500 <- siteCovs_500[,1:23]
-# 
-# siteCovs_1000 <- as.data.frame(b1000)
-# #siteCovs_1000 <- siteCovs_1000[,1:23]
-# 
-# siteCovs_2000 <- as.data.frame(b2000)
-# #siteCovs_2000 <- siteCovs_2000[,1:23]
+siteCovs <- siteCovs_2000 ### change scale here
+mdata <- unmarkedFrameOccu(y = y, siteCovs = siteCovs)
 
-#######
-umf_deer_100 <- unmarkedFrameOccu(y = y, siteCovs = siteCovs_100)
-umf_deer_500 <- unmarkedFrameOccu(y = y, siteCovs = siteCovs_500)
-umf_deer_1000 <- unmarkedFrameOccu(y = y, siteCovs = siteCovs_1000)
-umf_deer_2000 <- unmarkedFrameOccu(y = y, siteCovs = siteCovs_2000)
-
-##SINGLE SPECES
-# y_list_c <- list(coyote = as.matrix(detection_matrix$coyote %>% select(-1)))
-# coyote <- unmarkedFrameOccu(y = (detection_matrix$coyote%>%select(-1)),
-#                             siteCovs = cov)
-#obsCovs = det_list
-#mdata <- coyote
-## in order to change deer model with buffer change swap mdata variable with umf_deer_500, umf_deer_1000, or umf_deer_2000
-mdata <- umf_deer_2000
 
 ##single covariate comparison
 
@@ -272,6 +248,10 @@ fit <- fitList(fit_null, fit_LFT, fit_H2O, fit_WV, fit_MV, fit_WVF, fit_WVO,
                fit_FM_PA, fit_FD_PA,
                fit_cor, fit_hum, fit_dog)
 modSel(fit)
+#save each model fit after running each scale
+fit2000_all<- modSel(fit)
+
+###SELECT BEST COVARIATES at each scale
 
 fit2000 <-  occu(formula = ~1
                  ~ built + NDVI_mean + WVF_dist + total_freq_humans + total_freq_dogs + Fdec_PA + WV_dist + POP_mean + 1,
@@ -281,7 +261,14 @@ fit2000 <-  occu(formula = ~1
 modelList_2000 <- dredge(fit2000,
                          rank = "AIC")
 
-
+####we might not need this second selection step with a second dredge if we run colinearity and goodness of fit####
+###second selection of best covariates based on their variability across mdoels 
+coy_SOM <- occu(formula = ~ 1
+                ~ built + NDVI_median + WVF_PA,
+                data = mdata)
+coy_best_fit_cov_list <- dredge(coy_SOM, 
+                                rank = "AIC")
+#####
 
 fit1000 <-  occu(formula = ~1
                 ~ NDVI_mean + WVF_dist + total_freq_humans + total_freq_dogs + Fdec_PA + WV_dist + 1 ,
@@ -306,17 +293,6 @@ fit100 <-  occu(formula = ~1
 
 modelList_100 <- dredge(fit100,rank = "AIC")
 
-coy_SOM <- occu(formula = ~ 1
-                ~ built + NDVI_median + WVF_PA,
-                data = mdata)
-coy_best_fit_cov_list <- dredge(coy_SOM, 
-                                rank = "AIC")
-
-models2000 <- get.models(modelList_2000, subset = delta < 1)
-##to get a specific model from the dredge list
-models2000[[1]]
-
-avgm <- model.avg(models2000)
 
 
 
@@ -325,8 +301,10 @@ avgm <- model.avg(models2000)
 library(AICcmodavg) #install package if you dont have it
 
 #####change input HERE based on the scale ####
-models <- models2000
-site_cov <-siteCovs_2000
+model_list <- modelList_2000 ##change scale here
+models <- get.models(model_list, subset = delta < 1)
+
+site_cov <-siteCovs_2000 ##change scale here
 #####
 
 
