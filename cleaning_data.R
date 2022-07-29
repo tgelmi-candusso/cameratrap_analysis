@@ -1,8 +1,5 @@
 ###trying to clean undeployed periods of time
 library(dplyr)
-library(lubridate)
-library(ggplot2)
-library(dplyr)
 library(plyr)
 library(tidyverse)
 library(lubridate)
@@ -13,11 +10,11 @@ library(ggplot2)
 getwd()
 setwd("C:/Users/tizge/Documents/GitHub/cameratrap_analysis")
 
-#quick checkup
-# read_csv("TimelapseDatabase_FULL_14072022 (1).csv") %>%
+####quick checkup
+# read_csv("TimelapseDatabase_FULL_28072022.csv") %>%
 #   filter(RelativePath == "TUW36")
 
-data<-read_csv("TimelapseDatabase_FULL_14072022 (1).csv")%>%
+data<-read_csv("TimelapseDatabase_FULL_28072022.csv")%>%
   filter(revised==TRUE) %>%
   filter(DeleteFlag == FALSE)
 
@@ -51,6 +48,9 @@ dp<- read_csv("deployment_period.csv")%>%
   mutate(site_name = gsub("_", "", site_name))%>%
   mutate(site_name = gsub("TUW0", "TUW", site_name))
 data<- left_join(data, dp, by="site_name")
+
+##check  before 35 was disappearing because it wasnt in deployment period
+levels(factor(data$site_name))
 
 #####checking depoloyment period is correct (for record)####
 ####
@@ -132,7 +132,7 @@ Don <- c("TUW13",
          "TUW33b",
          "TUW33c",
          "TUW34",
-         "TUW35",
+         "TUW35a",
          "TUW35b",
          "TUW36",
          "TUW36b",
@@ -143,7 +143,7 @@ Don <- c("TUW13",
 CPC <- c("CPC1","CPC2", "CPC3", "CPC4", "CPC5", "CPC6")
 
 rev_sites <- c("TUW17",
-               #"TUW18",
+               "TUW18",
                "TUW19", 
                "TUW21", 
                "TUW23",
@@ -156,52 +156,64 @@ rev_sites <- c("TUW17",
                "TUW29b",
                "TUW39",
                "TUW42",
-               #"TUW35",
+               "TUW35a",
                "TUW36",
                "TUW38",
                "TUW37b",
                "TUW37",
-               #"TUW36b",
-               #"TUW33b",
-               #"TUW34",
+               "TUW36b",
+               "TUW33b",
+               "TUW34",
                "TUW38b",
-               #"TUW35b",
+               "TUW35b",
                #"TUW32",
                "TUW31",
+               #TUW30,
                #"TUW33",
-               "TUW2")
-               #"TUW14",
-               #"TUW1")
-
+               "TUW2",
+               "TUW14",
+               "TUW1",
+               "TUW4",
+               "TUW4b",
+               "TUW8",
+               "TUW5",
+               "TUW6")
 
 # ###determining malfunction dates (for record) visually check for periods when camera was not functioning#####
 # dpS <- data %>% filter(site_name == Sca)%>% ### I replotted this one after fixing TUW42
 #   filter(site_name != "TUW20")%>%
-#   ggplot(aes(x = as.POSIXct(DateTime))) + 
-#   geom_histogram(bins=120) + 
+#   ggplot(aes(x = as.POSIXct(DateTime))) +
+#   geom_histogram(bins=120) +
 #   facet_wrap(~site_name, scales="free_y")
 # ggsave(dpS, "Humber_images.png")
-# 
+# # 
 # dpH <- data %>% filter(site_name == Hum)%>%
-#   ggplot(aes(x = as.POSIXct(DateTime))) + 
-#   geom_histogram(bins=120) + 
+#   ggplot(aes(x = as.POSIXct(DateTime))) +
+#   geom_histogram(bins=120) +
 #   facet_wrap(~site_name, scales="free_y")+
 #   scale_x_datetime(date_labels = "%Y", date_minor_breaks = "1 month", name = "time scale")
 # ggsave(dpH, "Humber_images.png")
-# 
+# # 
 # dpD <- data %>% filter(site_name == Don)%>%
-#   ggplot(aes(x = as.POSIXct(DateTime))) + 
-#   geom_histogram(bins=120) + 
+#   ggplot(aes(x = as.POSIXct(DateTime))) +
+#   geom_histogram(bins=120) +
 #   facet_wrap(~site_name, scales="free_y")+
 #   scale_x_datetime(date_labels = "%Y", date_minor_breaks = "1 month", name = "time scale")
 # ggsave(dpD, "Don_images.png")
-#
+# #
 # dpC <- data %>% filter(site_name == CPC)%>%
-#   ggplot(aes(x = as.POSIXct(DateTime))) + 
-#   geom_histogram(bins=120) + 
+#   ggplot(aes(x = as.POSIXct(DateTime))) +
+#   geom_histogram(bins=120) +
 #   facet_wrap(~site_name, scales="free_y")+
 #   scale_x_datetime(date_labels = "%Y", date_minor_breaks = "1 month", name = "time scale")
 # ggsave(dpC, "CPCimages.png")
+# 
+# dpR <- data %>% filter(site_name == rev_sites)%>%
+#   ggplot(aes(x = as.POSIXct(DateTime))) +
+#   geom_histogram(bins=120) +
+#   facet_wrap(~site_name, scales="free_y")+
+#   scale_x_datetime(date_labels = "%Y", date_minor_breaks = "1 month", name = "time scale")
+# ggsave(dpR "CPCimages.png")
 
 ###check specific cameras and correct#
 
@@ -390,7 +402,6 @@ rev_sites <- c("TUW17",
 # data <- left_join(data, malf, by="site_name")
 # 
 # 
-
 ####reading malfunction dates from csv ####
 malf<-read_csv("malf.csv") %>% select(-...1)
 dp_malf<- left_join(dp, malf, by="site_name")
@@ -399,6 +410,12 @@ dp_malf<- dp_malf%>%
   mutate(date_end = as.Date(end))%>%
   select(!start)%>%
   select(!end)
+
+###error: we have only the scarborough malfunctioning dates###
+setdiff(rev_sites, malf$site_name) #sites not in malf, which are needed for rev_sites
+# [1] "TUW17"  "TUW18"  "TUW25"  "TUW26"  "TUW29"  "TUW29b" "TUW42"  "TUW35a"
+# [9] "TUW36"  "TUW38"  "TUW37"  "TUW33b" "TUW38b" "TUW14"  "TUW1"   "TUW4"  
+# [17] "TUW4b"  "TUW8"   "TUW5"   "TUW6" 
 
 # add malfunction dates
 data<- left_join(data, dp_malf, by = "site_name")
@@ -478,7 +495,7 @@ write.csv(d, "data_counts_week.csv")
 ###check results of for loop
 d%>%
   dplyr::filter(common_name == "coyote")%>%
-  dplyr::filter(site_name == "TUW33")
+  dplyr::filter(site_name == "TUW35a")
 
 #####create human presence, dogs presence dataframe as covariates ####
 
@@ -536,7 +553,7 @@ human_dog_df <- d5
 #View(human_dog_df)
 write.csv(human_dog_df, "human_dog_df.csv")
 #human_dog_df <- read.csv("human_dog_df.csv")
-###number of dogs per wee
+###number of dogs per week
 d%>% dplyr::filter(common_name == "dog")
 
 
@@ -568,7 +585,7 @@ for (sp in unique(d$common_name)){
 }
 
 
-saveRDS(detection_matrix, "detection_matrix_revsites_15072022.rds")
+saveRDS(detection_matrix, "detection_matrix_revsites_28072022.rds")
 
 ###################START HERE IF WANTING TO USE DIRECTLY THE DETECTION MATRIX #############
 ###read directly the detection matrix RDS to avoid every step of this script up to here###
@@ -588,11 +605,12 @@ library(readr)
 urlfile500="https://raw.githubusercontent.com/tgelmi-candusso/cameratrap_analysis/main/cov_500.csv"
 urlfile1000="https://raw.githubusercontent.com/tgelmi-candusso/cameratrap_analysis/main/cov_1000.csv"
 urlfile2000="https://raw.githubusercontent.com/tgelmi-candusso/cameratrap_analysis/main/cov_2000.csv"
+##needs to be updated
 urlfilehumans="https://raw.githubusercontent.com/tgelmi-candusso/cameratrap_analysis/main/human_dog_df.csv"
 
-human_dog_df <- read.csv(urlfilehumans) %>% 
+human_dog_df <- read_csv(urlfilehumans) %>% 
   select(-1) %>% 
-  select(site_name, total_freq_humans ,total_freq_dogs )
+  select(site_name, total_freq_humans ,total_freq_dogs, total_weeks_deployed)
 
 b500 <- read_csv(urlfile500)%>%
   mutate(site_name = gsub("_", "", site_name))%>%
@@ -600,7 +618,7 @@ b500 <- read_csv(urlfile500)%>%
 b500 <- left_join(b500, human_dog_df, by="site_name")%>%
   dplyr::filter(site_name %in% unique(detection_matrix$deer$site_name)) ##filter those for relevant for the analysis
 
-b1000 <- read.csv(urlfile1000)%>%
+b1000 <- read_csv(urlfile1000)%>%
   mutate(site_name = gsub("_", "", site_name))%>%
   mutate(site_name = gsub("TUW0", "TUW", site_name))
 b1000 <- left_join(b1000, human_dog_df, by="site_name")%>%
@@ -623,7 +641,7 @@ for (i in seq(1, length(detection_matrix), by=1)){
   matrix<- matrix %>% dplyr::filter(site_name %in% rev_sites) %>%
     mutate(count =  select(.,2:54) %>% rowSums(na.rm = TRUE)) #sum across rows
   weeks_deployed <- human_dog_df %>% dplyr::filter(site_name %in% rev_sites) %>% 
-    select(site_name, total_weeks_deployed)  #number of weeks deployed and filter for used sites
+    select('site_name', 'total_weeks_deployed')  #number of weeks deployed and filter for used sites
   matrix <- left_join(matrix, weeks_deployed, by= "site_name") #add the weeks deployed data to main df
   matrix <- matrix %>% mutate(freq =  (count+0.01)/total_weeks_deployed) #frequency math
   matrix_sel <- matrix %>% select(site_name, freq) #simplify for final output
