@@ -630,7 +630,7 @@ b2000 <- read_csv(urlfile2000)%>%
 b2000 <- left_join(b2000, human_dog_df, by="site_name")%>%
   dplyr::filter(site_name %in% unique(detection_matrix$deer$site_name)) ##filter those for relevant for the analysis
 
-
+###### species count/frequency per site across the year unit: percentage (in decimals) of weeks of deployment with presence of the species.
 #initiation objects
 species_count <- as.data.frame(rev_sites) 
 colnames(species_count) <- "site_name"
