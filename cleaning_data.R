@@ -81,10 +81,10 @@ data <- rbind(d_no42, d42_2020_fix) #the hole of data stil existing in TUW42 is 
 
 ##correct TUW31 and TUW32 switcharoo
 data<-data %>% 
+  mutate(site_name = as.character(site_name)) %>%
   mutate(site_name = ifelse(site_name_original == "TUW31" & (DateTime>= "2021-07-01 17:28:26" & DateTime<= "2021-08-29 11:23:51"), "TUW32", site_name)) %>%
   mutate(site_name = ifelse(site_name_original == "TUW31" & (DateTime>= "2021-08-29 13:02:26" & DateTime<= "2021-08-29 13:03:42"), "TUW32", site_name)) %>%
   mutate(site_name = ifelse(site_name_original == "TUW32" & (DateTime>= "2021-07-01 17:55:22" & DateTime<= "2021-08-29 11:57:01"), "TUW31", site_name))
-
 
 ##transects
 Sca <- c("TUW16",
@@ -156,10 +156,10 @@ rev_sites <- c("TUW17",
                "TUW29b",
                "TUW39",
                "TUW42",
+               #"TUW35",
                "TUW36",
                "TUW38",
                "TUW37b",
-               "TUW35a",
                "TUW37",
                #"TUW36b",
                #"TUW33b",
@@ -499,7 +499,7 @@ data_humans_total<- data_counts_pre%>%
 d5 <- left_join(total_weeks_deployed, data_humans_total, by="site_name") 
 ##divide by total number of days deployed
 d5 <- d5 %>% mutate(total_freq_humans = total_humans/total_weeks_deployed)
-View(data_humans_total)
+#View(data_humans_total)
 ##estimate total humans per week per site ## in case we need weekly presence of humans for the detection ####
 data_humans_weekly <- data_counts_pre%>%
   filter(humans == TRUE) %>%
@@ -535,7 +535,7 @@ d5 <- d5 %>% mutate(total_dogs_free = ifelse(is.na(total_dogs_free), 0, total_do
 human_dog_df <- d5
 #View(human_dog_df)
 write.csv(human_dog_df, "human_dog_df.csv")
-
+#human_dog_df <- read.csv("human_dog_df.csv")
 ###number of dogs per wee
 d%>% dplyr::filter(common_name == "dog")
 
@@ -612,5 +612,31 @@ b2000 <- read_csv(urlfile2000)%>%
 b2000 <- left_join(b2000, human_dog_df, by="site_name")%>%
   dplyr::filter(site_name %in% unique(detection_matrix$deer$site_name)) ##filter those for relevant for the analysis
 
+
+#initiation objects
+species_count <- as.data.frame(rev_sites) 
+colnames(species_count) <- "site_name"
+
+#loop
+for (i in seq(1, length(detection_matrix), by=1)){
+  matrix <- as.data.frame(detection_matrix[[i]])  #convert listed df as df with no name here the two [[]] are key.
+  matrix<- matrix %>% dplyr::filter(site_name %in% rev_sites) %>%
+    mutate(count =  select(.,2:54) %>% rowSums(na.rm = TRUE)) #sum across rows
+  weeks_deployed <- human_dog_df %>% dplyr::filter(site_name %in% rev_sites) %>% 
+    select(site_name, total_weeks_deployed)  #number of weeks deployed and filter for used sites
+  matrix <- left_join(matrix, weeks_deployed, by= "site_name") #add the weeks deployed data to main df
+  matrix <- matrix %>% mutate(freq =  (count+0.01)/total_weeks_deployed) #frequency math
+  matrix_sel <- matrix %>% select(site_name, freq) #simplify for final output
+  species_count <- left_join(species_count, matrix_sel, by="site_name") #append results to initiation object with the site_names 
+}
+##clean the final output by fixing column names to species names
+names <- names(detection_matrix)
+names <- c("site_name", names)
+colnames(species_count) <- names
+
+XY2 <- read.csv("sites_XY2.csv") %>% select (site_name, X, Y)
+species_count <- left_join(species_count, XY2, by="site_name")
+##save csv for further use in arcgis
+write.csv(species_count, "species_frequencies.csv")
 
 

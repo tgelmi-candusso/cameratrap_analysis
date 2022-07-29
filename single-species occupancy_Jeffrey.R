@@ -2,6 +2,9 @@ library(MuMIn)
 library(unmarked)
 library(dplyr)
 
+getwd()
+setwd("C:/Users/tizge/Documents/GitHub/cameratrap_analysis")
+
 ###################START HERE IF WANTING TO USE DIRECTLY THE DETECTION MATRIX #############
 ###read directly the detection matrix RDS to avoid every step of this script up to here###
 detection_matrix  <- readRDS(gzcon(url("https://github.com/tgelmi-candusso/cameratrap_analysis/raw/main/detection_matrix_revsites_15072022.rds")))
@@ -23,7 +26,7 @@ b100 <- read.csv(urlfile100, fileEncoding = 'UTF-8-BOM')%>% # added , fileEncodi
   mutate(site_name = gsub("_", "", site_name))%>%
   mutate(site_name = gsub("TUW0", "TUW", site_name))
 b100 <- left_join(b100, human_dog_df, by="site_name")%>%
-  dplyr::filter(site_name %in% unique(detection_matrix$deer$site_name))%>% ##filter those for relevant for the analysis
+  dplyr::filter(site_name %in% unique(detection_matrix$coyote$site_name))%>% ##filter those for relevant for the analysis
   mutate(total_freq_humans = ifelse(is.na(total_freq_humans), 0, total_freq_humans)) %>%
   mutate(total_freq_dogs = ifelse(is.na(total_freq_dogs), 0, total_freq_dogs))
 
@@ -31,7 +34,7 @@ b500 <- read.csv(urlfile500, fileEncoding = 'UTF-8-BOM')%>%
   mutate(site_name = gsub("_", "", site_name))%>%
   mutate(site_name = gsub("TUW0", "TUW", site_name))
 b500 <- left_join(b500, human_dog_df, by="site_name")%>%
-  dplyr::filter(site_name %in% unique(detection_matrix$deer$site_name))%>% ##filter those for relevant for the analysis
+  dplyr::filter(site_name %in% unique(detection_matrix$coyote$site_name))%>% ##filter those for relevant for the analysis
   mutate(total_freq_humans = ifelse(is.na(total_freq_humans), 0, total_freq_humans)) %>%
   mutate(total_freq_dogs = ifelse(is.na(total_freq_dogs), 0, total_freq_dogs))
 
@@ -39,7 +42,7 @@ b1000 <- read.csv(urlfile1000, fileEncoding = 'UTF-8-BOM')%>%
   mutate(site_name = gsub("_", "", site_name))%>%
   mutate(site_name = gsub("TUW0", "TUW", site_name))
 b1000 <- left_join(b1000, human_dog_df, by="site_name")%>%
-  dplyr::filter(site_name %in% unique(detection_matrix$deer$site_name))%>% ##filter those for relevant for the analysis
+  dplyr::filter(site_name %in% unique(detection_matrix$coyote$site_name))%>% ##filter those for relevant for the analysis
   mutate(total_freq_humans = ifelse(is.na(total_freq_humans), 0, total_freq_humans)) %>%
   mutate(total_freq_dogs = ifelse(is.na(total_freq_dogs), 0, total_freq_dogs))
 
@@ -47,7 +50,7 @@ b2000 <- read.csv(urlfile2000, fileEncoding = 'UTF-8-BOM')%>%
   mutate(site_name = gsub("_", "", site_name))%>%
   mutate(site_name = gsub("TUW0", "TUW", site_name))
 b2000 <- left_join(b2000, human_dog_df, by="site_name")%>%
-  dplyr::filter(site_name %in% unique(detection_matrix$deer$site_name))%>% ##filter those for relevant for the analysis
+  dplyr::filter(site_name %in% unique(detection_matrix$coyote$site_name))%>% ##filter those for relevant for the analysis
   mutate(total_freq_humans = ifelse(is.na(total_freq_humans), 0, total_freq_humans)) %>%
   mutate(total_freq_dogs = ifelse(is.na(total_freq_dogs), 0, total_freq_dogs))
 
@@ -125,8 +128,8 @@ siteCovs_2000 <- cov
 ##call detection covariate matrix here if using ##will need to add a detection variable later, but not for the summer project
 ##det_list <- list(season = det_covs)
 
-# setting up for occupancy for deer  ### CHANGE SPECIES HERE after $ if needed 
-y <- detection_matrix$deer %>% dplyr::filter(site_name %in% rev_sites) %>%
+# setting up for occupancy for coyote  ### CHANGE SPECIES HERE after $ if needed 
+y <- detection_matrix$coyote %>% dplyr::filter(site_name %in% rev_sites) %>%
   dplyr::filter(site_name != "TUW37") %>%  ##(OPTIONAL) dont remember why TUW37 is omitted
   select(-1) ## select final columns select(2:54), this could also be written select(-1) to avoid the first column with the site names
 
@@ -270,12 +273,19 @@ coy_best_fit_cov_list <- dredge(coy_SOM,
                                 rank = "AIC")
 #####
 
+#deer####
 fit1000 <-  occu(formula = ~1
                 ~ NDVI_mean + WVF_dist + total_freq_humans + total_freq_dogs + Fdec_PA + WV_dist + 1 ,
-                
+
                 data = mdata)
 
-modelList_1000 <- dredge(fit1000,
+#coyote####
+fit2000 <-  occu(formula = ~1
+                 ~ fit_FM_PA  + fit_POP_mean + fit_WVF_PA + fit_NDVI_mean + fit_built + 1,
+                 
+                data = mdata)
+
+modelList_2000 <- dredge(fit2000,
                         rank = "AIC")
 
 fit500 <-  occu(formula = ~1
